@@ -40,7 +40,7 @@ export default async function OrdersPage() {
   const userId = claimsData.claims.sub;
 
   // =====================================================
-  // AMBIL PESANAN USER
+  // AMBIL SEMUA PESANAN USER
   // =====================================================
 
   const {
@@ -94,6 +94,33 @@ export default async function OrdersPage() {
       order.status === "cancelled"
   ).length;
 
+  // =====================================================
+  // TOTAL BELANJA
+  // =====================================================
+  //
+  // Menghitung seluruh pesanan kecuali
+  // pesanan yang dibatalkan.
+  //
+  // Contoh:
+  // Pesanan 1 = Rp50.000
+  // Pesanan 2 = Rp75.000
+  // Pesanan 3 = Rp25.000 (cancelled)
+  //
+  // Total Belanja = Rp125.000
+  //
+  // =====================================================
+
+  const totalSpent = orders
+    .filter(
+      (order) =>
+        order.status !== "cancelled"
+    )
+    .reduce(
+      (sum, order) =>
+        sum + Number(order.total),
+      0
+    );
+
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
       {/* =================================================
@@ -137,6 +164,8 @@ export default async function OrdersPage() {
         ================================================= */}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* TOTAL PESANAN */}
+
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <p className="text-sm text-gray-500">
               Total Pesanan
@@ -150,6 +179,8 @@ export default async function OrdersPage() {
               Semua pesanan
             </p>
           </div>
+
+          {/* PESANAN AKTIF */}
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <p className="text-sm text-gray-500">
@@ -165,6 +196,8 @@ export default async function OrdersPage() {
             </p>
           </div>
 
+          {/* SELESAI */}
+
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <p className="text-sm text-gray-500">
               Selesai
@@ -179,17 +212,19 @@ export default async function OrdersPage() {
             </p>
           </div>
 
+          {/* TOTAL BELANJA */}
+
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <p className="text-sm text-gray-500">
-              Dibatalkan
+              Total Belanja
             </p>
 
-            <p className="mt-2 text-3xl font-bold text-gray-900">
-              {cancelledOrders}
+            <p className="mt-2 text-xl font-bold text-gray-900">
+              {formatRupiah(totalSpent)}
             </p>
 
             <p className="mt-1 text-xs text-gray-400">
-              Pesanan batal
+              Tidak termasuk pesanan batal
             </p>
           </div>
         </div>

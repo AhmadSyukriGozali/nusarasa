@@ -25,6 +25,12 @@ type Order = {
   created_at: string;
 };
 
+type OrderStatistic = {
+  id: string;
+  total: number;
+  status: string;
+};
+
 export default async function AccountPage() {
   const supabase = await createClient();
 
@@ -106,12 +112,33 @@ export default async function AccountPage() {
   const profile = profileData as Profile;
 
   // =====================================================
-  // AMBIL PESANAN USER
+  // AMBIL SEMUA PESANAN UNTUK STATISTIK
   // =====================================================
 
   const {
-    data: ordersData,
-    error: ordersError,
+    data: statisticsData,
+    error: statisticsError,
+  } = await supabase
+    .from("orders")
+    .select(
+      `
+        id,
+        total,
+        status
+      `
+    )
+    .eq("customer_id", userId);
+
+  const allOrders: OrderStatistic[] =
+    (statisticsData as OrderStatistic[] | null) ?? [];
+
+  // =====================================================
+  // AMBIL 1 PESANAN TERBARU UNTUK DITAMPILKAN
+  // =====================================================
+
+  const {
+    data: latestOrdersData,
+    error: latestOrdersError,
   } = await supabase
     .from("orders")
     .select(
@@ -131,23 +158,24 @@ export default async function AccountPage() {
     .eq("customer_id", userId)
     .order("created_at", {
       ascending: false,
-    });
+    })
+    .limit(1);
 
-  const orders: Order[] =
-    (ordersData as Order[] | null) ?? [];
+  const latestOrders: Order[] =
+    (latestOrdersData as Order[] | null) ?? [];
 
   // =====================================================
   // STATISTIK
   // =====================================================
 
-  const totalOrders = orders.length;
+  const totalOrders = allOrders.length;
 
-  const completedOrders = orders.filter(
+  const completedOrders = allOrders.filter(
     (order) =>
       order.status === "completed"
   ).length;
 
-  const activeOrders = orders.filter(
+  const activeOrders = allOrders.filter(
     (order) =>
       order.status === "pending" ||
       order.status === "confirmed" ||
@@ -155,7 +183,7 @@ export default async function AccountPage() {
       order.status === "ready"
   ).length;
 
-  const totalSpent = orders
+  const totalSpent = allOrders
     .filter(
       (order) =>
         order.status !== "cancelled"
@@ -165,6 +193,24 @@ export default async function AccountPage() {
         sum + Number(order.total),
       0
     );
+
+  // =====================================================
+  // ERROR LOG
+  // =====================================================
+
+  if (statisticsError) {
+    console.error(
+      "Gagal mengambil statistik pesanan:",
+      statisticsError
+    );
+  }
+
+  if (latestOrdersError) {
+    console.error(
+      "Gagal mengambil pesanan terbaru:",
+      latestOrdersError
+    );
+  }
 
   // =====================================================
   // USER DISPLAY
@@ -245,7 +291,7 @@ export default async function AccountPage() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.607 2.296.07 2.572-1.065z"
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543.826 3.31-.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 00-1.066-2.573c-.94-1.543-.826-3.31.37-2.37.996.607 2.296.07 2.572-1.065z"
                   />
 
                   <path
@@ -362,7 +408,7 @@ export default async function AccountPage() {
             </p>
 
             <p className="mt-1 text-xs text-gray-400">
-              Pesanan aktif
+              Semua Pesanan aktif
             </p>
           </div>
 
@@ -376,7 +422,7 @@ export default async function AccountPage() {
             </p>
 
             <p className="mt-1 text-xs text-gray-400">
-              Pesanan selesai
+              Semua Pesanan selesai
             </p>
           </div>
 
@@ -411,25 +457,37 @@ export default async function AccountPage() {
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-gray-500">
-                Semua pesanan yang pernah kamu
-                buat.
+                Menampilkan pesanan terbaru kamu.
               </p>
             </div>
 
-            <Link
-              href="/products"
-              className="inline-flex w-fit rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
-            >
-              Belanja Lagi
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              {/* LIHAT SEMUA PESANAN */}
+
+              <Link
+                href="/account/orders"
+                className="inline-flex w-fit rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-900 transition hover:border-gray-300 hover:bg-gray-50"
+              >
+                Lihat Semua Pesanan
+              </Link>
+
+              {/* BELANJA LAGI */}
+
+              <Link
+                href="/products"
+                className="inline-flex w-fit rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+              >
+                Belanja Lagi
+              </Link>
+            </div>
           </div>
 
           {/* ERROR */}
 
-          {ordersError ? (
+          {latestOrdersError ? (
             <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6">
               <p className="font-semibold text-red-800">
-                Gagal mengambil riwayat pesanan
+                Gagal mengambil pesanan terbaru
               </p>
 
               <p className="mt-2 text-sm leading-6 text-red-700">
@@ -437,7 +495,7 @@ export default async function AccountPage() {
                 lagi.
               </p>
             </div>
-          ) : orders.length === 0 ? (
+          ) : latestOrders.length === 0 ? (
             /* EMPTY */
 
             <div className="mt-6 rounded-3xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center">
@@ -463,10 +521,10 @@ export default async function AccountPage() {
               </Link>
             </div>
           ) : (
-            /* ORDER LIST */
+            /* PESANAN TERBARU */
 
-            <div className="mt-6 space-y-4">
-              {orders.map((order) => (
+            <div className="mt-6">
+              {latestOrders.map((order) => (
                 <Link
                   key={order.id}
                   href={`/account/orders/${order.id}`}
@@ -651,14 +709,19 @@ function OrderStatus({
   const classes: Record<string, string> = {
     pending:
       "bg-yellow-100 text-yellow-800",
+
     confirmed:
       "bg-blue-100 text-blue-800",
+
     preparing:
       "bg-purple-100 text-purple-800",
+
     ready:
       "bg-indigo-100 text-indigo-800",
+
     completed:
       "bg-green-100 text-green-800",
+
     cancelled:
       "bg-red-100 text-red-800",
   };
