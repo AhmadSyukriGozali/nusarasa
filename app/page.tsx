@@ -96,7 +96,6 @@ export default async function HomePage() {
     displayName.charAt(0).toUpperCase();
 
   const isAdmin = profile?.role === "admin";
-  const isCustomer = profile?.role === "customer";
 
   // ====================================================
   // AMBIL KATEGORI
@@ -145,23 +144,23 @@ export default async function HomePage() {
   // ====================================================
 
   return (
-    <main className="min-h-screen bg-white text-gray-900">
+    <main className="min-h-screen overflow-x-hidden bg-white text-gray-900">
       {/* ==================================================
           NAVBAR
       ================================================== */}
 
       <header className="border-b border-gray-100 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
           {/* LOGO */}
 
           <Link
             href="/"
-            className="text-2xl font-bold tracking-tight"
+            className="shrink-0 text-xl font-bold tracking-tight sm:text-2xl"
           >
             NusaRasa
           </Link>
 
-          {/* NAVIGATION */}
+          {/* DESKTOP NAVIGATION */}
 
           <nav className="hidden items-center gap-6 md:flex">
             <Link
@@ -186,88 +185,168 @@ export default async function HomePage() {
             </Link>
           </nav>
 
-          {/* USER AREA */}
+          {/* DESKTOP USER AREA */}
 
-          {!isLoggedIn ? (
-            <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-3 md:flex">
+            {!isLoggedIn ? (
+              <>
+                <Link
+                  href="/login"
+                  className="rounded-lg px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-100"
+                >
+                  Login
+                </Link>
+
+                <Link
+                  href="/register"
+                  className="rounded-lg bg-black px-4 py-2 font-medium text-white transition hover:bg-gray-800"
+                >
+                  Daftar
+                </Link>
+              </>
+            ) : (
+              <>
+                {/* PROFILE */}
+
+                <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black text-sm font-semibold text-white">
+                    {profile?.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt={displayName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      avatarInitial
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="max-w-32 truncate text-sm font-semibold text-gray-900">
+                      {displayName}
+                    </p>
+
+                    <p className="text-xs capitalize text-gray-500">
+                      {profile?.role ?? "user"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* ACCOUNT */}
+
+                <Link
+                  href="/account"
+                  className="rounded-lg px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-100"
+                >
+                  Akun
+                </Link>
+
+                {/* ADMIN */}
+
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="rounded-lg bg-black px-4 py-2 font-medium text-white transition hover:bg-gray-800"
+                  >
+                    Admin
+                  </Link>
+                )}
+
+                {/* LOGOUT */}
+
+                <form action={logout}>
+                  <button
+                    type="submit"
+                    className="rounded-lg border border-gray-200 px-4 py-2 font-medium text-red-600 transition hover:bg-red-50"
+                  >
+                    Logout
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+
+          {/* MOBILE USER AREA */}
+
+          <div className="flex items-center md:hidden">
+            {!isLoggedIn ? (
               <Link
                 href="/login"
-                className="rounded-lg px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-100"
+                className="rounded-lg bg-black px-3 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
               >
                 Login
               </Link>
-
-              <Link
-                href="/register"
-                className="rounded-lg bg-black px-4 py-2 font-medium text-white transition hover:bg-gray-800"
-              >
-                Daftar
-              </Link>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              {/* PROFILE */}
-
-              <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2">
-                {/* AVATAR */}
-
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black text-sm font-semibold text-white">
-                  {profile?.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt={displayName}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    avatarInitial
-                  )}
-                </div>
-
-                {/* NAME + ROLE */}
-
-                <div className="hidden min-w-0 sm:block">
-                  <p className="max-w-32 truncate text-sm font-semibold text-gray-900">
-                    {displayName}
-                  </p>
-
-                  <p className="text-xs capitalize text-gray-500">
-                    {profile?.role ?? "user"}
-                  </p>
-                </div>
-              </div>
-
-              {/* ACCOUNT */}
-
+            ) : (
               <Link
                 href="/account"
-                className="hidden rounded-lg px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-100 sm:block"
+                aria-label="Buka akun"
+                className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black text-sm font-semibold text-white"
+              >
+                {profile?.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt={displayName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  avatarInitial
+                )}
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* MOBILE NAVIGATION */}
+
+        <div className="border-t border-gray-100 md:hidden">
+          <nav
+            className={`mx-auto grid max-w-7xl ${
+              isLoggedIn && isAdmin
+                ? "grid-cols-5"
+                : isLoggedIn
+                  ? "grid-cols-4"
+                  : "grid-cols-3"
+            }`}
+          >
+            <Link
+              href="/"
+              className="flex min-w-0 items-center justify-center px-1 py-3 text-xs font-medium text-gray-700 transition hover:bg-gray-50 hover:text-black sm:text-sm"
+            >
+              Beranda
+            </Link>
+
+            <Link
+              href="/products"
+              className="flex min-w-0 items-center justify-center border-l border-gray-100 px-1 py-3 text-xs font-medium text-gray-700 transition hover:bg-gray-50 hover:text-black sm:text-sm"
+            >
+              Produk
+            </Link>
+
+            <Link
+              href="/cart"
+              className="flex min-w-0 items-center justify-center border-l border-gray-100 px-1 py-3 text-xs font-medium text-gray-700 transition hover:bg-gray-50 hover:text-black sm:text-sm"
+            >
+              Keranjang
+            </Link>
+
+            {isLoggedIn && (
+              <Link
+                href="/account"
+                className="flex min-w-0 items-center justify-center border-l border-gray-100 px-1 py-3 text-xs font-medium text-gray-700 transition hover:bg-gray-50 hover:text-black sm:text-sm"
               >
                 Akun
               </Link>
+            )}
 
-              {/* ADMIN */}
-
-              {isAdmin && (
-                <Link
-                  href="/admin"
-                  className="hidden rounded-lg bg-black px-4 py-2 font-medium text-white transition hover:bg-gray-800 md:block"
-                >
-                  Admin
-                </Link>
-              )}
-
-              {/* LOGOUT */}
-
-              <form action={logout}>
-                <button
-                  type="submit"
-                  className="rounded-lg border border-gray-200 px-4 py-2 font-medium text-red-600 transition hover:bg-red-50"
-                >
-                  Logout
-                </button>
-              </form>
-            </div>
-          )}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex min-w-0 items-center justify-center border-l border-gray-100 px-1 py-3 text-xs font-medium text-gray-700 transition hover:bg-gray-50 hover:text-black sm:text-sm"
+              >
+                Admin
+              </Link>
+            )}
+          </nav>
         </div>
       </header>
 
@@ -276,7 +355,7 @@ export default async function HomePage() {
       ================================================== */}
 
       <section className="border-b border-gray-100 bg-gray-50">
-        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-20 md:grid-cols-2 md:items-center">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 sm:py-20 md:grid-cols-2 md:items-center">
           {/* HERO TEXT */}
 
           <div>
@@ -284,41 +363,37 @@ export default async function HomePage() {
               UMKM Indonesia
             </p>
 
-            <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">
+            <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl">
               Rasa lokal,
               <br />
               pengalaman digital.
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg leading-8 text-gray-600">
+            <p className="mt-6 max-w-xl text-base leading-7 text-gray-600 sm:text-lg sm:leading-8">
               Temukan berbagai produk pilihan dari
               UMKM lokal dengan pengalaman belanja
               yang sederhana, cepat, dan modern.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-4">
-              {/* LIHAT PRODUK */}
-
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
               <Link
                 href="/products"
-                className="rounded-xl bg-black px-6 py-3 font-semibold text-white transition hover:bg-gray-800"
+                className="rounded-xl bg-black px-6 py-3 text-center font-semibold text-white transition hover:bg-gray-800"
               >
                 Lihat Produk
               </Link>
 
-              {/* BUTTON BERDASARKAN LOGIN */}
-
               {isLoggedIn ? (
                 <Link
                   href="/account"
-                  className="rounded-xl border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-900 transition hover:bg-gray-100"
+                  className="rounded-xl border border-gray-300 bg-white px-6 py-3 text-center font-semibold text-gray-900 transition hover:bg-gray-100"
                 >
                   Akun Saya
                 </Link>
               ) : (
                 <Link
                   href="/register"
-                  className="rounded-xl border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-900 transition hover:bg-gray-100"
+                  className="rounded-xl border border-gray-300 bg-white px-6 py-3 text-center font-semibold text-gray-900 transition hover:bg-gray-100"
                 >
                   Buat Akun
                 </Link>
@@ -328,12 +403,12 @@ export default async function HomePage() {
 
           {/* HERO CARD */}
 
-          <div className="rounded-3xl bg-black p-8 text-white shadow-xl md:p-12">
+          <div className="rounded-3xl bg-black p-7 text-white shadow-xl sm:p-8 md:p-12">
             <p className="text-sm font-semibold uppercase tracking-widest text-gray-400">
               NusaRasa
             </p>
 
-            <h2 className="mt-4 text-3xl font-bold">
+            <h2 className="mt-4 text-2xl font-bold leading-tight sm:text-3xl">
               Belanja produk lokal dengan cara
               yang lebih mudah.
             </h2>
@@ -351,14 +426,14 @@ export default async function HomePage() {
           KATEGORI
       ================================================== */}
 
-      <section className="mx-auto max-w-7xl px-6 py-16">
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-widest text-gray-500">
               Jelajahi
             </p>
 
-            <h2 className="mt-2 text-3xl font-bold">
+            <h2 className="mt-2 text-2xl font-bold sm:text-3xl">
               Kategori Produk
             </h2>
           </div>
@@ -377,7 +452,7 @@ export default async function HomePage() {
               <Link
                 key={category.id}
                 href={`/products?category=${category.slug}`}
-                className="rounded-2xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:border-gray-400 hover:shadow-lg"
+                className="rounded-2xl border border-gray-200 bg-white p-5 transition hover:-translate-y-1 hover:border-gray-400 hover:shadow-lg sm:p-6"
               >
                 <h3 className="text-lg font-semibold">
                   {category.name}
@@ -401,14 +476,14 @@ export default async function HomePage() {
       ================================================== */}
 
       <section className="border-y border-gray-100 bg-gray-50">
-        <div className="mx-auto max-w-7xl px-6 py-16">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-widest text-gray-500">
                 Pilihan
               </p>
 
-              <h2 className="mt-2 text-3xl font-bold">
+              <h2 className="mt-2 text-2xl font-bold sm:text-3xl">
                 Produk Terbaru
               </h2>
             </div>
@@ -434,8 +509,6 @@ export default async function HomePage() {
                     href={`/products/${product.slug}`}
                     className="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-lg"
                   >
-                    {/* IMAGE */}
-
                     <div className="aspect-square overflow-hidden bg-gray-100">
                       {product.image_url ? (
                         <img
@@ -449,8 +522,6 @@ export default async function HomePage() {
                         </div>
                       )}
                     </div>
-
-                    {/* CONTENT */}
 
                     <div className="p-5">
                       <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
@@ -467,12 +538,12 @@ export default async function HomePage() {
                         </p>
                       )}
 
-                      <div className="mt-4 flex items-center justify-between">
+                      <div className="mt-4 flex items-center justify-between gap-3">
                         <p className="font-bold">
                           {formatRupiah(product.price)}
                         </p>
 
-                        <p className="text-xs text-gray-500">
+                        <p className="shrink-0 text-xs text-gray-500">
                           Stok {product.stock}
                         </p>
                       </div>
@@ -493,10 +564,10 @@ export default async function HomePage() {
           CTA
       ================================================== */}
 
-      <section className="mx-auto max-w-7xl px-6 py-16">
-        <div className="rounded-3xl bg-gray-100 p-8 md:p-12">
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
+        <div className="rounded-3xl bg-gray-100 p-7 sm:p-8 md:p-12">
           <div className="max-w-2xl">
-            <h2 className="text-3xl font-bold">
+            <h2 className="text-2xl font-bold sm:text-3xl">
               Siap mulai belanja?
             </h2>
 
@@ -508,7 +579,7 @@ export default async function HomePage() {
             <div className="mt-6">
               <Link
                 href="/products"
-                className="inline-block rounded-xl bg-black px-6 py-3 font-semibold text-white transition hover:bg-gray-800"
+                className="inline-block w-full rounded-xl bg-black px-6 py-3 text-center font-semibold text-white transition hover:bg-gray-800 sm:w-auto"
               >
                 Jelajahi Produk
               </Link>
@@ -522,7 +593,7 @@ export default async function HomePage() {
       ================================================== */}
 
       <footer className="border-t border-gray-100 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-gray-500 md:flex-row md:items-center md:justify-between">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-gray-500 sm:px-6 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="font-semibold text-gray-900">
               NusaRasa
@@ -533,7 +604,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="flex gap-5">
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
             <Link
               href="/products"
               className="transition hover:text-black"
@@ -560,7 +631,7 @@ export default async function HomePage() {
         </div>
 
         <div className="border-t border-gray-100">
-          <div className="mx-auto max-w-7xl px-6 py-4 text-xs text-gray-400">
+          <div className="mx-auto max-w-7xl px-4 py-4 text-xs text-gray-400 sm:px-6">
             © {new Date().getFullYear()} NusaRasa. All
             rights reserved.
           </div>
