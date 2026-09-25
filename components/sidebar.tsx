@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 type SidebarProps = {
   isLoggedIn: boolean;
@@ -31,24 +32,6 @@ function HomeIcon({ className = "h-5 w-5" }: IconProps) {
       <path d="m3 10 9-7 9 7" />
       <path d="M5 9.5V21h14V9.5" />
       <path d="M9 21v-6h6v6" />
-    </svg>
-  );
-}
-
-function ShoppingBagIcon({ className = "h-5 w-5" }: IconProps) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M6 8h12l1 13H5L6 8Z" />
-      <path d="M9 8a3 3 0 0 1 6 0" />
     </svg>
   );
 }
@@ -91,7 +74,9 @@ function UserIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
-function ShoppingCartIcon({ className = "h-5 w-5" }: IconProps) {
+function ShoppingCartIcon({
+  className = "h-5 w-5",
+}: IconProps) {
   return (
     <svg
       className={className}
@@ -110,7 +95,9 @@ function ShoppingCartIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
-function ClipboardIcon({ className = "h-5 w-5" }: IconProps) {
+function ClipboardIcon({
+  className = "h-5 w-5",
+}: IconProps) {
   return (
     <svg
       className={className}
@@ -129,7 +116,9 @@ function ClipboardIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
-function PackageIcon({ className = "h-5 w-5" }: IconProps) {
+function PackageIcon({
+  className = "h-5 w-5",
+}: IconProps) {
   return (
     <svg
       className={className}
@@ -166,7 +155,9 @@ function LogInIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
-function UserPlusIcon({ className = "h-5 w-5" }: IconProps) {
+function UserPlusIcon({
+  className = "h-5 w-5",
+}: IconProps) {
   return (
     <svg
       className={className}
@@ -185,7 +176,9 @@ function UserPlusIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
-function SettingsIcon({ className = "h-5 w-5" }: IconProps) {
+function SettingsIcon({
+  className = "h-5 w-5",
+}: IconProps) {
   return (
     <svg
       className={className}
@@ -203,7 +196,9 @@ function SettingsIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
-function LogOutIcon({ className = "h-5 w-5" }: IconProps) {
+function LogOutIcon({
+  className = "h-5 w-5",
+}: IconProps) {
   return (
     <svg
       className={className}
@@ -256,7 +251,9 @@ function CloseIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
-function ChevronIcon({ className = "h-4 w-4" }: IconProps) {
+function ChevronIcon({
+  className = "h-4 w-4",
+}: IconProps) {
   return (
     <svg
       className={className}
@@ -269,6 +266,24 @@ function ChevronIcon({ className = "h-4 w-4" }: IconProps) {
       aria-hidden="true"
     >
       <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}
+
+function PanelIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M9 4v16" />
     </svg>
   );
 }
@@ -288,7 +303,13 @@ export default function Sidebar({
   avatarUrl,
 }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const supabase = createClient();
+
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopOpen, setDesktopOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const customerNavigation: NavigationItem[] = [
     {
@@ -341,12 +362,54 @@ export default function Sidebar({
       return pathname === item.href;
     }
 
-    return pathname === item.href || pathname.startsWith(`${item.href}/`);
+    return (
+      pathname === item.href ||
+      pathname.startsWith(`${item.href}/`)
+    );
   }
 
   function closeMobileMenu() {
     setMobileOpen(false);
   }
+
+  async function handleLogout() {
+    if (loggingOut) {
+      return;
+    }
+
+    setLoggingOut(true);
+
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error("Logout error:", error);
+      setLoggingOut(false);
+      return;
+    }
+
+    setMobileOpen(false);
+    setDesktopOpen(false);
+
+    router.replace("/login");
+    router.refresh();
+  }
+
+  useEffect(() => {
+    if (!mobileOpen) {
+      document.body.style.overflow = "";
+      return;
+    }
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   function NavigationLink({
     item,
@@ -383,7 +446,9 @@ export default function Sidebar({
           <item.icon className="h-[19px] w-[19px]" />
         </span>
 
-        <span className="truncate">{item.label}</span>
+        <span className="truncate">
+          {item.label}
+        </span>
 
         <span
           className={`ml-auto transition-all duration-300 ${
@@ -398,14 +463,18 @@ export default function Sidebar({
     );
   }
 
-  function SidebarContent() {
+  function SidebarContent({
+    mobile = false,
+  }: {
+    mobile?: boolean;
+  }) {
     return (
       <div className="flex h-full flex-col">
-        {/* Brand */}
+        {/* BRAND */}
         <div className="flex h-[82px] shrink-0 items-center border-b border-white/[0.08] px-5">
           <Link
             href="/"
-            onClick={closeMobileMenu}
+            onClick={mobile ? closeMobileMenu : undefined}
             className="group flex min-w-0 items-center gap-3"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-sm font-black tracking-tight text-black shadow-lg shadow-black/20 transition-transform duration-300 group-hover:scale-105">
@@ -416,6 +485,7 @@ export default function Sidebar({
               <p className="truncate text-[17px] font-bold tracking-tight text-white">
                 NusaRasa
               </p>
+
               <p className="truncate text-[11px] font-medium tracking-wide text-white/40">
                 UMKM • LOCAL TASTE
               </p>
@@ -423,10 +493,10 @@ export default function Sidebar({
           </Link>
         </div>
 
-        {/* Navigation */}
+        {/* NAVIGATION */}
         <div className="flex-1 overflow-y-auto px-3 py-5">
           <div className="space-y-7">
-            {/* Main */}
+            {/* MENU UTAMA */}
             <section>
               <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
                 Menu Utama
@@ -442,7 +512,7 @@ export default function Sidebar({
               </nav>
             </section>
 
-            {/* Account */}
+            {/* PENGGUNA */}
             {isLoggedIn && (
               <section>
                 <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
@@ -460,7 +530,7 @@ export default function Sidebar({
               </section>
             )}
 
-            {/* Admin */}
+            {/* ADMIN */}
             {isLoggedIn && isAdmin && (
               <section>
                 <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
@@ -478,7 +548,7 @@ export default function Sidebar({
               </section>
             )}
 
-            {/* Guest */}
+            {/* GUEST */}
             {!isLoggedIn && (
               <section>
                 <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
@@ -523,13 +593,13 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* Bottom Profile */}
+        {/* PROFILE */}
         <div className="shrink-0 border-t border-white/[0.08] p-3">
           {isLoggedIn ? (
             <div className="rounded-2xl bg-white/[0.05] p-2">
               <Link
                 href="/account"
-                onClick={closeMobileMenu}
+                onClick={mobile ? closeMobileMenu : undefined}
                 className="group flex min-w-0 items-center gap-3 rounded-xl px-2 py-2 transition-all duration-300 hover:bg-white/[0.06]"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-black ring-1 ring-white/10">
@@ -540,7 +610,9 @@ export default function Sidebar({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    displayName.charAt(0).toUpperCase()
+                    displayName
+                      .charAt(0)
+                      .toUpperCase()
                   )}
                 </div>
 
@@ -548,6 +620,7 @@ export default function Sidebar({
                   <p className="truncate text-sm font-semibold text-white">
                     {displayName}
                   </p>
+
                   <p className="truncate text-xs capitalize text-white/40">
                     {role}
                   </p>
@@ -559,21 +632,19 @@ export default function Sidebar({
               <div className="mt-1">
                 <button
                   type="button"
-                  onClick={() => {
-                    const logoutButton =
-                      document.querySelector<HTMLButtonElement>(
-                        '[data-nusarasa-logout="true"]'
-                      );
-
-                    logoutButton?.click();
-                  }}
-                  className="group flex h-[42px] w-full items-center gap-3 rounded-xl px-2.5 text-sm font-medium text-white/50 transition-all duration-300 hover:bg-red-500/10 hover:text-red-300"
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="group flex h-[42px] w-full items-center gap-3 rounded-xl px-2.5 text-sm font-medium text-white/50 transition-all duration-300 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 group-hover:bg-red-500/10">
                     <LogOutIcon className="h-[18px] w-[18px]" />
                   </span>
 
-                  <span>Logout</span>
+                  <span>
+                    {loggingOut
+                      ? "Logout..."
+                      : "Logout"}
+                  </span>
                 </button>
               </div>
             </div>
@@ -588,6 +659,7 @@ export default function Sidebar({
                   <p className="text-xs font-medium text-white/50">
                     Belum login
                   </p>
+
                   <p className="truncate text-[11px] text-white/25">
                     Masuk untuk melanjutkan
                   </p>
@@ -610,12 +682,55 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[270px] bg-[#111111] shadow-2xl shadow-black/10 lg:block">
-        <SidebarContent />
-      </aside>
+      {/* ==================================================
+          DESKTOP
+      ================================================== */}
 
-      {/* Mobile Top Bar */}
+      <div className="hidden lg:block">
+        {/* Invisible hover trigger */}
+        <div
+          className="fixed inset-y-0 left-0 z-[60] w-5"
+          onMouseEnter={() => setDesktopOpen(true)}
+          aria-hidden="true"
+        />
+
+        {/* Sidebar */}
+        <aside
+          onMouseEnter={() => setDesktopOpen(true)}
+          onMouseLeave={() => setDesktopOpen(false)}
+          className={`fixed inset-y-0 left-0 z-50 w-[270px] bg-[#111111] shadow-2xl shadow-black/30 transition-transform duration-300 ease-out ${
+            desktopOpen
+              ? "translate-x-0"
+              : "-translate-x-[calc(100%-12px)]"
+          }`}
+        >
+          <SidebarContent />
+
+          {/* Desktop collapsed handle */}
+          {!desktopOpen && (
+            <div className="absolute inset-y-0 right-0 flex w-3 items-center justify-center">
+              <div className="h-20 w-1 rounded-full bg-white/20 transition-colors duration-300 hover:bg-white/40" />
+            </div>
+          )}
+        </aside>
+
+        {/* Small fixed trigger indicator */}
+        <div
+          className={`fixed left-0 top-1/2 z-[55] flex h-16 w-3 -translate-y-1/2 items-center justify-center transition-opacity duration-300 ${
+            desktopOpen
+              ? "pointer-events-none opacity-0"
+              : "opacity-100"
+          }`}
+          aria-hidden="true"
+        >
+          <div className="h-10 w-1 rounded-r-full bg-black/20" />
+        </div>
+      </div>
+
+      {/* ==================================================
+          MOBILE TOP BAR
+      ================================================== */}
+
       <div className="fixed inset-x-0 top-0 z-40 flex h-[68px] items-center justify-between border-b border-gray-200 bg-white/95 px-4 backdrop-blur-xl lg:hidden">
         <Link
           href="/"
@@ -629,6 +744,7 @@ export default function Sidebar({
             <p className="text-base font-bold tracking-tight text-gray-900">
               NusaRasa
             </p>
+
             <p className="text-[9px] font-medium tracking-[0.16em] text-gray-400">
               LOCAL TASTE
             </p>
@@ -646,7 +762,10 @@ export default function Sidebar({
         </button>
       </div>
 
-      {/* Mobile Overlay */}
+      {/* ==================================================
+          MOBILE OVERLAY
+      ================================================== */}
+
       {mobileOpen && (
         <button
           type="button"
@@ -656,7 +775,10 @@ export default function Sidebar({
         />
       )}
 
-      {/* Mobile Sidebar */}
+      {/* ==================================================
+          MOBILE SIDEBAR
+      ================================================== */}
+
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-[285px] bg-[#111111] shadow-2xl shadow-black/30 transition-transform duration-300 ease-out lg:hidden ${
           mobileOpen
@@ -676,18 +798,23 @@ export default function Sidebar({
           </button>
         </div>
 
-        <SidebarContent />
+        <SidebarContent mobile />
       </aside>
 
-      {/* Hidden compatibility trigger for existing LogoutButton */}
-      {isLoggedIn && (
-        <div className="hidden">
-          <button
-            type="button"
-            data-nusarasa-logout="true"
-            aria-hidden="true"
-          />
-        </div>
+      {/* ==================================================
+          MOBILE FLOATING MENU BUTTON
+      ================================================== */}
+
+      {!mobileOpen && (
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Buka sidebar"
+          aria-expanded={mobileOpen}
+          className="fixed bottom-5 right-5 z-30 flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white shadow-xl shadow-black/20 transition-all duration-300 hover:scale-105 hover:bg-gray-800 lg:hidden"
+        >
+          <PanelIcon className="h-5 w-5" />
+        </button>
       )}
     </>
   );

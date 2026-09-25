@@ -2,15 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+
 import {
   getCart,
   getCartTotal,
   clearCart,
   type CartItem,
 } from "@/lib/cart";
+
 import { formatRupiah } from "@/lib/utils";
 
-type PaymentMethod = "cash" | "bank_transfer";
+type PaymentMethod =
+  | "cash"
+  | "bank_transfer";
 
 type CreatedOrder = {
   id: string;
@@ -25,34 +29,39 @@ type CreatedOrder = {
 };
 
 export default function CheckoutPage() {
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [cart, setCart] =
+    useState<CartItem[]>([]);
 
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [notes, setNotes] = useState("");
+  const [loaded, setLoaded] =
+    useState(false);
+
+  const [customerName, setCustomerName] =
+    useState("");
+
+  const [customerPhone, setCustomerPhone] =
+    useState("");
+
+  const [deliveryAddress, setDeliveryAddress] =
+    useState("");
+
+  const [notes, setNotes] =
+    useState("");
 
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>("cash");
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
-  /*
-   * Menyimpan order yang baru saja dibuat.
-   *
-   * Kita membutuhkan ID order untuk membuka:
-   *
-   * /account/orders/[id]
-   */
   const [successOrder, setSuccessOrder] =
     useState<CreatedOrder | null>(null);
 
-  // =====================================================
+  // ==================================================
   // LOAD CART
-  // =====================================================
+  // ==================================================
 
   useEffect(() => {
     const currentCart = getCart();
@@ -61,9 +70,9 @@ export default function CheckoutPage() {
     setLoaded(true);
   }, []);
 
-  // =====================================================
+  // ==================================================
   // SUBMIT CHECKOUT
-  // =====================================================
+  // ==================================================
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
@@ -73,90 +82,182 @@ export default function CheckoutPage() {
     setError("");
 
     // -----------------------------------------------
-    // Validasi cart
+    // VALIDASI CART
     // -----------------------------------------------
 
     if (cart.length === 0) {
-      setError("Keranjang masih kosong.");
+      setError(
+        "Keranjang masih kosong."
+      );
       return;
     }
 
     // -----------------------------------------------
-    // Validasi nama
+    // VALIDASI NAMA
     // -----------------------------------------------
 
-    if (!customerName.trim()) {
-      setError("Nama pelanggan wajib diisi.");
+    const trimmedName =
+      customerName.trim();
+
+    if (!trimmedName) {
+      setError(
+        "Nama pelanggan wajib diisi."
+      );
+      return;
+    }
+
+    if (trimmedName.length < 3) {
+      setError(
+        "Nama pelanggan minimal 3 karakter."
+      );
       return;
     }
 
     // -----------------------------------------------
-    // Validasi nomor HP
+    // VALIDASI NOMOR TELEPON
     // -----------------------------------------------
 
-    if (!customerPhone.trim()) {
-      setError("Nomor HP wajib diisi.");
+    const trimmedPhone =
+      customerPhone.trim();
+
+    if (!trimmedPhone) {
+      setError(
+        "Nomor HP wajib diisi."
+      );
+      return;
+    }
+
+    if (trimmedPhone.length < 8) {
+      setError(
+        "Nomor HP tidak valid."
+      );
       return;
     }
 
     // -----------------------------------------------
-    // Validasi alamat
+    // VALIDASI ALAMAT
     // -----------------------------------------------
 
-    if (!deliveryAddress.trim()) {
-      setError("Alamat pengiriman wajib diisi.");
+    const trimmedAddress =
+      deliveryAddress.trim();
+
+    if (!trimmedAddress) {
+      setError(
+        "Alamat pengiriman wajib diisi."
+      );
+      return;
+    }
+
+    if (trimmedAddress.length < 10) {
+      setError(
+        "Alamat pengiriman terlalu singkat."
+      );
+      return;
+    }
+
+    // -----------------------------------------------
+    // VALIDASI PAYMENT
+    // -----------------------------------------------
+
+    if (
+      paymentMethod !== "cash" &&
+      paymentMethod !==
+        "bank_transfer"
+    ) {
+      setError(
+        "Metode pembayaran tidak valid."
+      );
       return;
     }
 
     setIsSubmitting(true);
 
     try {
+      // ---------------------------------------------
+      // PREPARE ITEMS
+      // ---------------------------------------------
+
       /*
-       * Hanya kirim productId dan quantity.
+       * Jangan kirim harga dari localStorage.
        *
-       * Harga TIDAK dipercaya dari localStorage.
-       *
-       * Server akan mengambil harga asli
-       * langsung dari database.
+       * Server/API akan mengambil harga asli
+       * dari database melalui create_order_atomic.
        */
-      const items = cart.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      }));
+
+      const items = cart.map(
+        (item) => ({
+          productId:
+            item.productId,
+          quantity:
+            item.quantity,
+        })
+      );
 
       // ---------------------------------------------
-      // Kirim request ke API
+      // SEND REQUEST
       // ---------------------------------------------
 
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          items,
+      const response = await fetch(
+        "/api/orders",
+        {
+          method: "POST",
 
-          customerName: customerName.trim(),
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
 
-          customerPhone: customerPhone.trim(),
+          body: JSON.stringify({
+            items,
 
-          deliveryAddress:
-            deliveryAddress.trim(),
+            customerName:
+              trimmedName,
 
-          notes: notes.trim(),
+            customerPhone:
+              trimmedPhone,
 
-          paymentMethod,
-        }),
-      });
+            deliveryAddress:
+              trimmedAddress,
+
+            notes:
+              notes.trim(),
+
+            paymentMethod,
+          }),
+        }
+      );
 
       // ---------------------------------------------
-      // Ambil response JSON
+      // PARSE RESPONSE
       // ---------------------------------------------
 
-      const result = await response.json();
+      let result: {
+        success?: boolean;
+        order?: {
+          id?: string;
+          orderNumber?: string;
+          subtotal?: number;
+          discount?: number;
+          deliveryFee?: number;
+          total?: number;
+          status?: string;
+          paymentMethod?: string;
+          paymentStatus?: string;
+        };
+        error?: string;
+      };
+
+      try {
+        result =
+          await response.json();
+      } catch {
+        throw new Error(
+          "Response server tidak valid."
+        );
+      }
 
       // ---------------------------------------------
-      // Jika API gagal
+      // API ERROR
       // ---------------------------------------------
 
       if (!response.ok) {
@@ -166,20 +267,16 @@ export default function CheckoutPage() {
         );
       }
 
-      /*
-       * Pastikan response mempunyai order.
-       */
+      // ---------------------------------------------
+      // VALIDASI RESPONSE
+      // ---------------------------------------------
+
       if (!result?.order) {
         throw new Error(
           "Pesanan berhasil dibuat, tetapi data pesanan tidak ditemukan."
         );
       }
 
-      /*
-       * Pastikan order ID tersedia.
-       *
-       * ID ini adalah UUID dari tabel orders.
-       */
       if (!result.order.id) {
         throw new Error(
           "ID pesanan tidak ditemukan."
@@ -187,51 +284,61 @@ export default function CheckoutPage() {
       }
 
       // ---------------------------------------------
-      // Order berhasil dibuat
+      // BUILD ORDER DATA
       // ---------------------------------------------
 
-      const createdOrder: CreatedOrder = {
-        id: result.order.id,
+      const createdOrder: CreatedOrder =
+        {
+          id: result.order.id,
 
-        orderNumber:
-          result.order.orderNumber,
+          orderNumber:
+            result.order.orderNumber ??
+            "Pesanan",
 
-        subtotal:
-          result.order.subtotal,
+          subtotal:
+            result.order.subtotal,
 
-        discount:
-          result.order.discount,
+          discount:
+            result.order.discount,
 
-        deliveryFee:
-          result.order.deliveryFee,
+          deliveryFee:
+            result.order.deliveryFee,
 
-        total:
-          result.order.total,
+          total:
+            result.order.total,
 
-        status:
-          result.order.status,
+          status:
+            result.order.status,
 
-        paymentMethod:
-          result.order.paymentMethod,
+          paymentMethod:
+            result.order
+              .paymentMethod,
 
-        paymentStatus:
-          result.order.paymentStatus,
-      };
+          paymentStatus:
+            result.order
+              .paymentStatus,
+        };
+
+      // ---------------------------------------------
+      // CLEAR CART
+      // ---------------------------------------------
 
       /*
-       * Order sudah berhasil masuk database.
-       *
-       * Sekarang cart boleh dikosongkan.
+       * Cart baru boleh dikosongkan setelah
+       * server mengembalikan response sukses.
        */
+
       clearCart();
 
       setCart([]);
 
-      /*
-       * Simpan data order untuk halaman
-       * sukses.
-       */
-      setSuccessOrder(createdOrder);
+      // ---------------------------------------------
+      // SHOW SUCCESS
+      // ---------------------------------------------
+
+      setSuccessOrder(
+        createdOrder
+      );
     } catch (err) {
       console.error(
         "CHECKOUT ERROR:",
@@ -248,115 +355,131 @@ export default function CheckoutPage() {
     }
   }
 
-  // =====================================================
+  // ==================================================
   // LOADING
-  // =====================================================
+  // ==================================================
 
   if (!loaded) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          <p className="text-gray-500">
-            Memuat checkout...
-          </p>
-        </div>
+      <main className="min-h-screen bg-gray-50 text-gray-900">
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+          <div className="animate-pulse">
+            <div className="h-4 w-24 rounded bg-gray-200" />
+
+            <div className="mt-4 h-10 w-64 rounded bg-gray-200" />
+
+            <div className="mt-3 h-5 w-96 max-w-full rounded bg-gray-200" />
+          </div>
+
+          <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_380px]">
+            <div className="space-y-6">
+              <div className="h-80 animate-pulse rounded-2xl bg-white" />
+
+              <div className="h-56 animate-pulse rounded-2xl bg-white" />
+            </div>
+
+            <div className="h-96 animate-pulse rounded-2xl bg-white" />
+          </div>
+        </section>
       </main>
     );
   }
 
-  // =====================================================
-  // ORDER BERHASIL
-  // =====================================================
+  // ==================================================
+  // SUCCESS
+  // ==================================================
 
   if (successOrder) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        {/* HEADER */}
-
-        <header className="border-b border-gray-100 bg-white">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-            <Link
-              href="/"
-              className="text-2xl font-bold tracking-tight"
-            >
-              NusaRasa
-            </Link>
-
-            <nav className="flex items-center gap-6 text-sm">
-              <Link
-                href="/"
-                className="text-gray-600 transition hover:text-black"
-              >
-                Beranda
-              </Link>
-
-              <Link
-                href="/products"
-                className="text-gray-600 transition hover:text-black"
-              >
-                Produk
-              </Link>
-
-              <Link
-                href="/account"
-                className="text-gray-600 transition hover:text-black"
-              >
-                Akun
-              </Link>
-            </nav>
-          </div>
-        </header>
-
-        {/* SUCCESS CONTENT */}
-
-        <div className="mx-auto max-w-2xl px-6 py-20">
-          <div className="rounded-3xl bg-white p-10 text-center shadow-sm">
+      <main className="min-h-screen bg-gray-50 text-gray-900">
+        <section className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm sm:p-10">
             {/* SUCCESS ICON */}
 
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl font-bold text-green-700">
               ✓
             </div>
 
-            <p className="mt-6 text-sm font-semibold uppercase tracking-wider text-gray-500">
-              Pesanan berhasil
-            </p>
+            {/* TITLE */}
 
-            <h1 className="mt-2 text-3xl font-bold text-gray-900">
-              Terima kasih!
-            </h1>
+            <div className="mt-6 text-center">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">
+                NusaRasa
+              </p>
 
-            <p className="mt-4 text-gray-600">
-              Pesanan kamu sudah berhasil
-              dibuat dan sedang menunggu
-              diproses.
-            </p>
+              <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+                Pesanan Berhasil!
+              </h1>
+
+              <p className="mx-auto mt-4 max-w-lg text-sm leading-6 text-gray-600 sm:text-base">
+                Pesanan kamu sudah berhasil
+                dibuat dan sedang menunggu
+                diproses oleh NusaRasa.
+              </p>
+            </div>
 
             {/* ORDER NUMBER */}
 
-            <div className="mt-6 rounded-2xl bg-gray-50 p-5">
+            <div className="mt-8 rounded-2xl bg-gray-50 p-5 text-center">
               <p className="text-sm text-gray-500">
                 Nomor Pesanan
               </p>
 
-              <p className="mt-1 text-xl font-bold tracking-wide">
+              <p className="mt-2 break-all text-xl font-bold tracking-wide text-gray-900">
                 {successOrder.orderNumber}
               </p>
             </div>
 
-            {/* TOTAL */}
+            {/* ORDER INFO */}
 
-            {successOrder.total !==
-              undefined && (
-              <div className="mt-4 rounded-2xl border border-gray-100 p-5">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-gray-200 p-5">
                 <p className="text-sm text-gray-500">
                   Total Pesanan
                 </p>
 
-                <p className="mt-1 text-xl font-bold">
-                  {formatRupiah(
-                    Number(
-                      successOrder.total
-                    )
+                <p className="mt-2 text-xl font-bold text-gray-900">
+                  {successOrder.total !==
+                  undefined
+                    ? formatRupiah(
+                        Number(
+                          successOrder.total
+                        )
+                      )
+                    : "—"}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 p-5">
+                <p className="text-sm text-gray-500">
+                  Pembayaran
+                </p>
+
+                <p className="mt-2 font-semibold text-gray-900">
+                  {formatPaymentMethod(
+                    successOrder.paymentMethod
+                  )}
+                </p>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  {formatPaymentStatus(
+                    successOrder.paymentStatus
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* STATUS */}
+
+            {successOrder.status && (
+              <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-5">
+                <p className="text-sm font-medium text-blue-900">
+                  Status Pesanan
+                </p>
+
+                <p className="mt-1 text-sm text-blue-700">
+                  {formatOrderStatus(
+                    successOrder.status
                   )}
                 </p>
               </div>
@@ -364,194 +487,147 @@ export default function CheckoutPage() {
 
             {/* ACTIONS */}
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              {/* DETAIL ORDER */}
-
+            <div className="mt-8 grid gap-3 sm:grid-cols-2">
               <Link
                 href={`/account/orders/${successOrder.id}`}
-                className="rounded-xl bg-black px-6 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                className="flex items-center justify-center rounded-xl bg-black px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-gray-800"
               >
                 Lihat Detail Pesanan
               </Link>
 
-              {/* PRODUCTS */}
-
               <Link
                 href="/products"
-                className="rounded-xl border border-gray-200 px-6 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                className="flex items-center justify-center rounded-xl border border-gray-200 px-5 py-3.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
               >
                 Belanja Lagi
               </Link>
             </div>
 
-            {/* ACCOUNT */}
-
-            <Link
-              href="/account"
-              className="mt-5 inline-block text-sm font-medium text-gray-500 transition hover:text-black"
-            >
-              Lihat Riwayat Pesanan
-            </Link>
+            <div className="mt-5 text-center">
+              <Link
+                href="/account"
+                className="text-sm font-medium text-gray-500 transition hover:text-black"
+              >
+                Lihat Semua Pesanan
+              </Link>
+            </div>
           </div>
-        </div>
+        </section>
       </main>
     );
   }
 
-  // =====================================================
-  // CART KOSONG
-  // =====================================================
+  // ==================================================
+  // EMPTY CART
+  // ==================================================
 
   if (cart.length === 0) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        {/* HEADER */}
-
-        <header className="border-b border-gray-100 bg-white">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-            <Link
-              href="/"
-              className="text-2xl font-bold tracking-tight"
-            >
-              NusaRasa
-            </Link>
-
-            <Link
-              href="/products"
-              className="text-sm font-medium text-gray-600 transition hover:text-black"
-            >
-              Produk
-            </Link>
-          </div>
-        </header>
-
-        {/* EMPTY */}
-
-        <div className="mx-auto max-w-2xl px-6 py-20">
-          <div className="rounded-3xl bg-white p-10 text-center shadow-sm">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-xl">
+      <main className="min-h-screen bg-gray-50 text-gray-900">
+        <section className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16">
+          <div className="rounded-3xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-10">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 text-2xl">
               🛒
             </div>
 
-            <h1 className="mt-5 text-2xl font-bold">
+            <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">
+              NusaRasa
+            </p>
+
+            <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
               Keranjang kosong
             </h1>
 
-            <p className="mt-3 text-gray-500">
+            <p className="mt-3 text-sm leading-6 text-gray-500">
               Tambahkan produk terlebih dahulu
               sebelum melakukan checkout.
             </p>
 
             <Link
               href="/products"
-              className="mt-6 inline-block rounded-xl bg-black px-6 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+              className="mt-7 inline-flex rounded-xl bg-black px-6 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
             >
               Lihat Produk
             </Link>
           </div>
-        </div>
+        </section>
       </main>
     );
   }
 
-  // =====================================================
-  // TOTAL CART
-  // =====================================================
+  // ==================================================
+  // CART TOTAL
+  // ==================================================
 
-  const total = getCartTotal(cart);
+  const total =
+    getCartTotal(cart);
 
-  // =====================================================
+  const totalItems =
+    cart.reduce(
+      (sum, item) =>
+        sum + item.quantity,
+      0
+    );
+
+  // ==================================================
   // CHECKOUT PAGE
-  // =====================================================
+  // ==================================================
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* =================================================
+    <main className="min-h-screen bg-gray-50 text-gray-900">
+      {/* ==================================================
           HEADER
-      ================================================= */}
+      ================================================== */}
 
-      <header className="border-b border-gray-100 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-          <Link
-            href="/"
-            className="text-2xl font-bold tracking-tight"
-          >
+      <section className="border-b border-gray-100 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">
             NusaRasa
-          </Link>
-
-          <nav className="flex items-center gap-6 text-sm">
-            <Link
-              href="/"
-              className="text-gray-600 transition hover:text-black"
-            >
-              Beranda
-            </Link>
-
-            <Link
-              href="/products"
-              className="text-gray-600 transition hover:text-black"
-            >
-              Produk
-            </Link>
-
-            <Link
-              href="/cart"
-              className="text-gray-600 transition hover:text-black"
-            >
-              Keranjang
-            </Link>
-
-            <Link
-              href="/account"
-              className="rounded-lg bg-black px-4 py-2 font-medium text-white"
-            >
-              Akun
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* =================================================
-          CONTENT
-      ================================================= */}
-
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        {/* TITLE */}
-
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">
-            Checkout
           </p>
 
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-gray-900">
-            Selesaikan Pesanan
+          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+            Checkout
           </h1>
 
-          <p className="mt-3 text-gray-600">
-            Masukkan data pengiriman dan pilih
-            metode pembayaran.
+          <p className="mt-3 max-w-2xl text-base leading-7 text-gray-600">
+            Lengkapi informasi pengiriman dan
+            pilih metode pembayaran untuk
+            menyelesaikan pesanan.
           </p>
         </div>
+      </section>
 
-        {/* =================================================
-            FORM
-        ================================================= */}
+      {/* ==================================================
+          CONTENT
+      ================================================== */}
 
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         <form
           onSubmit={handleSubmit}
-          className="mt-10 grid gap-8 lg:grid-cols-[1fr_380px]"
+          className="grid gap-8 lg:grid-cols-[1fr_380px]"
         >
-          {/* =================================================
-              LEFT
-          ================================================= */}
+          {/* ==================================================
+              LEFT COLUMN
+          ================================================== */}
 
           <div className="space-y-6">
-            {/* CUSTOMER */}
+            {/* CUSTOMER INFORMATION */}
 
-            <section className="rounded-2xl bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-bold">
-                Informasi Pelanggan
-              </h2>
+            <section className="rounded-2xl border border-gray-200 bg-white p-6">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-400">
+                  01
+                </p>
+
+                <h2 className="mt-1 text-xl font-bold text-gray-900">
+                  Informasi Pelanggan
+                </h2>
+
+                <p className="mt-2 text-sm text-gray-500">
+                  Data ini digunakan untuk
+                  proses pengiriman pesanan.
+                </p>
+              </div>
 
               <div className="mt-6 space-y-5">
                 {/* NAME */}
@@ -566,6 +642,7 @@ export default function CheckoutPage() {
 
                   <input
                     id="customerName"
+                    name="customerName"
                     type="text"
                     value={customerName}
                     onChange={(event) =>
@@ -573,8 +650,10 @@ export default function CheckoutPage() {
                         event.target.value
                       )
                     }
-                    placeholder="Nama lengkap"
-                    className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-black focus:ring-1 focus:ring-black"
+                    placeholder="Masukkan nama lengkap"
+                    autoComplete="name"
+                    disabled={isSubmitting}
+                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:bg-gray-50"
                     required
                   />
                 </div>
@@ -591,6 +670,7 @@ export default function CheckoutPage() {
 
                   <input
                     id="customerPhone"
+                    name="customerPhone"
                     type="tel"
                     value={customerPhone}
                     onChange={(event) =>
@@ -599,7 +679,10 @@ export default function CheckoutPage() {
                       )
                     }
                     placeholder="08xxxxxxxxxx"
-                    className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-black focus:ring-1 focus:ring-black"
+                    autoComplete="tel"
+                    inputMode="tel"
+                    disabled={isSubmitting}
+                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:bg-gray-50"
                     required
                   />
                 </div>
@@ -616,17 +699,27 @@ export default function CheckoutPage() {
 
                   <textarea
                     id="deliveryAddress"
+                    name="deliveryAddress"
                     value={deliveryAddress}
                     onChange={(event) =>
                       setDeliveryAddress(
                         event.target.value
                       )
                     }
-                    placeholder="Alamat lengkap pengiriman"
-                    rows={4}
-                    className="mt-2 w-full resize-none rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-black focus:ring-1 focus:ring-black"
+                    placeholder="Masukkan alamat lengkap pengiriman"
+                    autoComplete="street-address"
+                    rows={5}
+                    disabled={isSubmitting}
+                    className="mt-2 w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:bg-gray-50"
                     required
                   />
+
+                  <p className="mt-2 text-xs text-gray-400">
+                    Sertakan nama jalan, nomor
+                    rumah, RT/RW, kelurahan,
+                    kecamatan, dan informasi
+                    lainnya jika diperlukan.
+                  </p>
                 </div>
 
                 {/* NOTES */}
@@ -644,15 +737,17 @@ export default function CheckoutPage() {
 
                   <textarea
                     id="notes"
+                    name="notes"
                     value={notes}
                     onChange={(event) =>
                       setNotes(
                         event.target.value
                       )
                     }
-                    placeholder="Contoh: Tolong jangan terlalu pedas."
+                    placeholder="Contoh: Kirim sore hari."
                     rows={3}
-                    className="mt-2 w-full resize-none rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-black focus:ring-1 focus:ring-black"
+                    disabled={isSubmitting}
+                    className="mt-2 w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:bg-gray-50"
                   />
                 </div>
               </div>
@@ -660,15 +755,33 @@ export default function CheckoutPage() {
 
             {/* PAYMENT */}
 
-            <section className="rounded-2xl bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-bold">
-                Metode Pembayaran
-              </h2>
+            <section className="rounded-2xl border border-gray-200 bg-white p-6">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-400">
+                  02
+                </p>
 
-              <div className="mt-5 space-y-3">
+                <h2 className="mt-1 text-xl font-bold text-gray-900">
+                  Metode Pembayaran
+                </h2>
+
+                <p className="mt-2 text-sm text-gray-500">
+                  Pilih metode pembayaran yang
+                  tersedia.
+                </p>
+              </div>
+
+              <div className="mt-6 space-y-3">
                 {/* CASH */}
 
-                <label className="flex cursor-pointer items-center gap-4 rounded-xl border border-gray-200 p-4 transition hover:bg-gray-50">
+                <label
+                  className={`flex cursor-pointer gap-4 rounded-xl border p-4 transition ${
+                    paymentMethod ===
+                    "cash"
+                      ? "border-black bg-gray-50"
+                      : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -678,25 +791,36 @@ export default function CheckoutPage() {
                       "cash"
                     }
                     onChange={() =>
-                      setPaymentMethod("cash")
+                      setPaymentMethod(
+                        "cash"
+                      )
                     }
-                    className="h-4 w-4"
+                    disabled={isSubmitting}
+                    className="mt-1 h-4 w-4"
                   />
 
                   <div>
-                    <p className="font-semibold">
+                    <p className="font-semibold text-gray-900">
                       Cash
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-500">
-                      Bayar secara tunai.
+                    <p className="mt-1 text-sm leading-5 text-gray-500">
+                      Bayar secara tunai sesuai
+                      instruksi dari penjual.
                     </p>
                   </div>
                 </label>
 
                 {/* BANK TRANSFER */}
 
-                <label className="flex cursor-pointer items-center gap-4 rounded-xl border border-gray-200 p-4 transition hover:bg-gray-50">
+                <label
+                  className={`flex cursor-pointer gap-4 rounded-xl border p-4 transition ${
+                    paymentMethod ===
+                    "bank_transfer"
+                      ? "border-black bg-gray-50"
+                      : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -710,17 +834,18 @@ export default function CheckoutPage() {
                         "bank_transfer"
                       )
                     }
-                    className="h-4 w-4"
+                    disabled={isSubmitting}
+                    className="mt-1 h-4 w-4"
                   />
 
                   <div>
-                    <p className="font-semibold">
+                    <p className="font-semibold text-gray-900">
                       Transfer Bank
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-500">
-                      Pembayaran melalui transfer
-                      bank.
+                    <p className="mt-1 text-sm leading-5 text-gray-500">
+                      Pembayaran dilakukan melalui
+                      transfer bank.
                     </p>
                   </div>
                 </label>
@@ -730,20 +855,53 @@ export default function CheckoutPage() {
             {/* ERROR */}
 
             {error && (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-                <p className="text-sm font-medium text-red-700">
+              <div
+                role="alert"
+                className="rounded-xl border border-red-200 bg-red-50 p-4"
+              >
+                <p className="text-sm font-semibold text-red-800">
+                  Gagal membuat pesanan
+                </p>
+
+                <p className="mt-1 text-sm leading-6 text-red-700">
                   {error}
                 </p>
               </div>
             )}
+
+            {/* SECURITY INFO */}
+
+            <div className="rounded-2xl border border-gray-200 bg-white p-5">
+              <div className="flex gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm">
+                  ✓
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Pesanan aman
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-gray-500">
+                    Harga produk akan diverifikasi
+                    kembali oleh server saat
+                    pesanan dibuat.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* =================================================
-              RIGHT - ORDER SUMMARY
-          ================================================= */}
+          {/* ==================================================
+              RIGHT COLUMN
+          ================================================== */}
 
-          <aside className="h-fit rounded-2xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold">
+          <aside className="h-fit rounded-2xl border border-gray-200 bg-white p-6 lg:sticky lg:top-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-400">
+              Pesanan
+            </p>
+
+            <h2 className="mt-1 text-xl font-bold text-gray-900">
               Ringkasan Pesanan
             </h2>
 
@@ -753,7 +911,7 @@ export default function CheckoutPage() {
               {cart.map((item) => (
                 <div
                   key={item.productId}
-                  className="flex gap-4"
+                  className="flex gap-3"
                 >
                   {/* IMAGE */}
 
@@ -765,7 +923,7 @@ export default function CheckoutPage() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-xs text-gray-400">
+                      <div className="flex h-full items-center justify-center text-[10px] text-gray-400">
                         No Image
                       </div>
                     )}
@@ -774,11 +932,11 @@ export default function CheckoutPage() {
                   {/* INFO */}
 
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-1 font-medium text-gray-900">
+                    <p className="line-clamp-2 text-sm font-medium text-gray-900">
                       {item.name}
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-xs text-gray-500">
                       {item.quantity} ×{" "}
                       {formatRupiah(
                         item.price
@@ -788,7 +946,7 @@ export default function CheckoutPage() {
 
                   {/* SUBTOTAL */}
 
-                  <p className="shrink-0 text-sm font-semibold">
+                  <p className="shrink-0 text-sm font-semibold text-gray-900">
                     {formatRupiah(
                       item.price *
                         item.quantity
@@ -801,52 +959,62 @@ export default function CheckoutPage() {
             {/* SUMMARY */}
 
             <div className="mt-6 space-y-3 border-t border-gray-100 pt-6">
-              {/* SUBTOTAL */}
+              <div className="flex justify-between gap-4 text-sm">
+                <span className="text-gray-500">
+                  Jumlah item
+                </span>
 
-              <div className="flex justify-between text-sm">
+                <span className="font-medium text-gray-900">
+                  {totalItems}
+                </span>
+              </div>
+
+              <div className="flex justify-between gap-4 text-sm">
                 <span className="text-gray-500">
                   Subtotal
                 </span>
 
-                <span className="font-medium">
+                <span className="font-medium text-gray-900">
                   {formatRupiah(total)}
                 </span>
               </div>
 
-              {/* DISCOUNT */}
-
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between gap-4 text-sm">
                 <span className="text-gray-500">
                   Diskon
                 </span>
 
-                <span className="font-medium">
+                <span className="font-medium text-gray-900">
                   Rp0
                 </span>
               </div>
 
-              {/* DELIVERY */}
-
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between gap-4 text-sm">
                 <span className="text-gray-500">
                   Biaya Pengiriman
                 </span>
 
-                <span className="font-medium">
+                <span className="font-medium text-gray-500">
                   Rp0
                 </span>
               </div>
 
-              {/* TOTAL */}
+              <div className="border-t border-gray-100 pt-4">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      Total
+                    </p>
 
-              <div className="flex items-center justify-between border-t border-gray-100 pt-4">
-                <span className="font-semibold">
-                  Total
-                </span>
+                    <p className="mt-1 text-xs text-gray-400">
+                      Total sementara
+                    </p>
+                  </div>
 
-                <span className="text-2xl font-bold">
-                  {formatRupiah(total)}
-                </span>
+                  <p className="text-xl font-bold text-black">
+                    {formatRupiah(total)}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -855,24 +1023,110 @@ export default function CheckoutPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="mt-6 w-full rounded-xl bg-black px-6 py-4 font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-6 flex w-full items-center justify-center rounded-xl bg-black px-6 py-4 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSubmitting
-                ? "Memproses Pesanan..."
-                : "Buat Pesanan"}
+              {isSubmitting ? (
+                <>
+                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Memproses Pesanan...
+                </>
+              ) : (
+                "Buat Pesanan"
+              )}
             </button>
 
             {/* BACK */}
 
             <Link
               href="/cart"
-              className="mt-3 block text-center text-sm font-medium text-gray-500 transition hover:text-black"
+              className="mt-3 flex w-full items-center justify-center rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
             >
               ← Kembali ke Keranjang
             </Link>
+
+            {/* PRODUCT COUNT */}
+
+            <p className="mt-4 text-center text-xs leading-5 text-gray-400">
+              {cart.length} jenis produk ·{" "}
+              {totalItems} item
+            </p>
           </aside>
         </form>
-      </div>
+      </section>
     </main>
   );
+}
+
+// ==================================================
+// FORMAT ORDER STATUS
+// ==================================================
+
+function formatOrderStatus(
+  value?: string
+) {
+  if (!value) {
+    return "Menunggu";
+  }
+
+  const labels: Record<
+    string,
+    string
+  > = {
+    pending: "Menunggu diproses",
+    confirmed: "Pesanan dikonfirmasi",
+    preparing: "Pesanan sedang diproses",
+    ready: "Pesanan siap",
+    completed: "Pesanan selesai",
+    cancelled: "Pesanan dibatalkan",
+  };
+
+  return (
+    labels[value] ?? value
+  );
+}
+
+// ==================================================
+// FORMAT PAYMENT METHOD
+// ==================================================
+
+function formatPaymentMethod(
+  value?: string
+) {
+  if (!value) {
+    return "—";
+  }
+
+  const labels: Record<
+    string,
+    string
+  > = {
+    cash: "Cash",
+    bank_transfer: "Transfer Bank",
+  };
+
+  return labels[value] ?? value;
+}
+
+// ==================================================
+// FORMAT PAYMENT STATUS
+// ==================================================
+
+function formatPaymentStatus(
+  value?: string
+) {
+  if (!value) {
+    return "Menunggu";
+  }
+
+  const labels: Record<
+    string,
+    string
+  > = {
+    unpaid: "Belum dibayar",
+    pending: "Menunggu pembayaran",
+    paid: "Sudah dibayar",
+    failed: "Pembayaran gagal",
+  };
+
+  return labels[value] ?? value;
 }

@@ -48,7 +48,7 @@ export default async function ShopLayout({
         avatarUrl={profile?.avatar_url}
       />
 
-      <main className="min-h-screen lg:pl-[270px]">
+      <main className="min-h-screen w-full">
         <div className="min-h-screen pt-[68px] lg:pt-0">
           {children}
         </div>
