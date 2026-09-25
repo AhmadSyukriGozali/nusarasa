@@ -12,32 +12,47 @@ import { formatRupiah } from "@/lib/utils";
 
 type PaymentMethod = "cash" | "bank_transfer";
 
+type CreatedOrder = {
+  id: string;
+  orderNumber: string;
+  subtotal?: number;
+  discount?: number;
+  deliveryFee?: number;
+  total?: number;
+  status?: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
+};
+
 export default function CheckoutPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  const [customerName, setCustomerName] =
-    useState("");
-
-  const [customerPhone, setCustomerPhone] =
-    useState("");
-
-  const [deliveryAddress, setDeliveryAddress] =
-    useState("");
-
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
   const [notes, setNotes] = useState("");
 
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>("cash");
 
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [successOrderNumber, setSuccessOrderNumber] =
-    useState("");
+  /*
+   * Menyimpan order yang baru saja dibuat.
+   *
+   * Kita membutuhkan ID order untuk membuka:
+   *
+   * /account/orders/[id]
+   */
+  const [successOrder, setSuccessOrder] =
+    useState<CreatedOrder | null>(null);
+
+  // =====================================================
+  // LOAD CART
+  // =====================================================
 
   useEffect(() => {
     const currentCart = getCart();
@@ -46,6 +61,10 @@ export default function CheckoutPage() {
     setLoaded(true);
   }, []);
 
+  // =====================================================
+  // SUBMIT CHECKOUT
+  // =====================================================
+
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
   ) {
@@ -53,35 +72,39 @@ export default function CheckoutPage() {
 
     setError("");
 
-    if (cart.length === 0) {
-      setError(
-        "Keranjang masih kosong."
-      );
+    // -----------------------------------------------
+    // Validasi cart
+    // -----------------------------------------------
 
+    if (cart.length === 0) {
+      setError("Keranjang masih kosong.");
       return;
     }
+
+    // -----------------------------------------------
+    // Validasi nama
+    // -----------------------------------------------
 
     if (!customerName.trim()) {
-      setError(
-        "Nama pelanggan wajib diisi."
-      );
-
+      setError("Nama pelanggan wajib diisi.");
       return;
     }
+
+    // -----------------------------------------------
+    // Validasi nomor HP
+    // -----------------------------------------------
 
     if (!customerPhone.trim()) {
-      setError(
-        "Nomor HP wajib diisi."
-      );
-
+      setError("Nomor HP wajib diisi.");
       return;
     }
 
-    if (!deliveryAddress.trim()) {
-      setError(
-        "Alamat pengiriman wajib diisi."
-      );
+    // -----------------------------------------------
+    // Validasi alamat
+    // -----------------------------------------------
 
+    if (!deliveryAddress.trim()) {
+      setError("Alamat pengiriman wajib diisi.");
       return;
     }
 
@@ -91,7 +114,8 @@ export default function CheckoutPage() {
       /*
        * Hanya kirim productId dan quantity.
        *
-       * Harga tidak dipercaya dari localStorage.
+       * Harga TIDAK dipercaya dari localStorage.
+       *
        * Server akan mengambil harga asli
        * langsung dari database.
        */
@@ -100,29 +124,40 @@ export default function CheckoutPage() {
         quantity: item.quantity,
       }));
 
-      const response = await fetch(
-        "/api/orders",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            items,
-            customerName:
-              customerName.trim(),
-            customerPhone:
-              customerPhone.trim(),
-            deliveryAddress:
-              deliveryAddress.trim(),
-            notes: notes.trim(),
-            paymentMethod,
-          }),
-        }
-      );
+      // ---------------------------------------------
+      // Kirim request ke API
+      // ---------------------------------------------
+
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items,
+
+          customerName: customerName.trim(),
+
+          customerPhone: customerPhone.trim(),
+
+          deliveryAddress:
+            deliveryAddress.trim(),
+
+          notes: notes.trim(),
+
+          paymentMethod,
+        }),
+      });
+
+      // ---------------------------------------------
+      // Ambil response JSON
+      // ---------------------------------------------
 
       const result = await response.json();
+
+      // ---------------------------------------------
+      // Jika API gagal
+      // ---------------------------------------------
 
       if (!response.ok) {
         throw new Error(
@@ -132,15 +167,71 @@ export default function CheckoutPage() {
       }
 
       /*
-       * Order berhasil dibuat.
+       * Pastikan response mempunyai order.
+       */
+      if (!result?.order) {
+        throw new Error(
+          "Pesanan berhasil dibuat, tetapi data pesanan tidak ditemukan."
+        );
+      }
+
+      /*
+       * Pastikan order ID tersedia.
+       *
+       * ID ini adalah UUID dari tabel orders.
+       */
+      if (!result.order.id) {
+        throw new Error(
+          "ID pesanan tidak ditemukan."
+        );
+      }
+
+      // ---------------------------------------------
+      // Order berhasil dibuat
+      // ---------------------------------------------
+
+      const createdOrder: CreatedOrder = {
+        id: result.order.id,
+
+        orderNumber:
+          result.order.orderNumber,
+
+        subtotal:
+          result.order.subtotal,
+
+        discount:
+          result.order.discount,
+
+        deliveryFee:
+          result.order.deliveryFee,
+
+        total:
+          result.order.total,
+
+        status:
+          result.order.status,
+
+        paymentMethod:
+          result.order.paymentMethod,
+
+        paymentStatus:
+          result.order.paymentStatus,
+      };
+
+      /*
+       * Order sudah berhasil masuk database.
+       *
        * Sekarang cart boleh dikosongkan.
        */
       clearCart();
+
       setCart([]);
 
-      setSuccessOrderNumber(
-        result.order.orderNumber
-      );
+      /*
+       * Simpan data order untuk halaman
+       * sukses.
+       */
+      setSuccessOrder(createdOrder);
     } catch (err) {
       console.error(
         "CHECKOUT ERROR:",
@@ -157,6 +248,10 @@ export default function CheckoutPage() {
     }
   }
 
+  // =====================================================
+  // LOADING
+  // =====================================================
+
   if (!loaded) {
     return (
       <main className="min-h-screen bg-gray-50">
@@ -169,12 +264,15 @@ export default function CheckoutPage() {
     );
   }
 
-  /*
-   * Setelah order berhasil
-   */
-  if (successOrderNumber) {
+  // =====================================================
+  // ORDER BERHASIL
+  // =====================================================
+
+  if (successOrder) {
     return (
       <main className="min-h-screen bg-gray-50">
+        {/* HEADER */}
+
         <header className="border-b border-gray-100 bg-white">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
             <Link
@@ -187,24 +285,35 @@ export default function CheckoutPage() {
             <nav className="flex items-center gap-6 text-sm">
               <Link
                 href="/"
-                className="text-gray-600 hover:text-black"
+                className="text-gray-600 transition hover:text-black"
               >
                 Beranda
               </Link>
 
               <Link
                 href="/products"
-                className="text-gray-600 hover:text-black"
+                className="text-gray-600 transition hover:text-black"
               >
                 Produk
+              </Link>
+
+              <Link
+                href="/account"
+                className="text-gray-600 transition hover:text-black"
+              >
+                Akun
               </Link>
             </nav>
           </div>
         </header>
 
+        {/* SUCCESS CONTENT */}
+
         <div className="mx-auto max-w-2xl px-6 py-20">
           <div className="rounded-3xl bg-white p-10 text-center shadow-sm">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-2xl">
+            {/* SUCCESS ICON */}
+
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl font-bold text-green-700">
               ✓
             </div>
 
@@ -222,43 +331,82 @@ export default function CheckoutPage() {
               diproses.
             </p>
 
+            {/* ORDER NUMBER */}
+
             <div className="mt-6 rounded-2xl bg-gray-50 p-5">
               <p className="text-sm text-gray-500">
                 Nomor Pesanan
               </p>
 
               <p className="mt-1 text-xl font-bold tracking-wide">
-                {successOrderNumber}
+                {successOrder.orderNumber}
               </p>
             </div>
 
+            {/* TOTAL */}
+
+            {successOrder.total !==
+              undefined && (
+              <div className="mt-4 rounded-2xl border border-gray-100 p-5">
+                <p className="text-sm text-gray-500">
+                  Total Pesanan
+                </p>
+
+                <p className="mt-1 text-xl font-bold">
+                  {formatRupiah(
+                    Number(
+                      successOrder.total
+                    )
+                  )}
+                </p>
+              </div>
+            )}
+
+            {/* ACTIONS */}
+
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Link
-                href="/products"
-                className="rounded-xl bg-black px-6 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
-              >
-                Kembali ke Produk
-              </Link>
+              {/* DETAIL ORDER */}
 
               <Link
-                href="/account"
+                href={`/account/orders/${successOrder.id}`}
+                className="rounded-xl bg-black px-6 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+              >
+                Lihat Detail Pesanan
+              </Link>
+
+              {/* PRODUCTS */}
+
+              <Link
+                href="/products"
                 className="rounded-xl border border-gray-200 px-6 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
               >
-                Lihat Akun
+                Belanja Lagi
               </Link>
             </div>
+
+            {/* ACCOUNT */}
+
+            <Link
+              href="/account"
+              className="mt-5 inline-block text-sm font-medium text-gray-500 transition hover:text-black"
+            >
+              Lihat Riwayat Pesanan
+            </Link>
           </div>
         </div>
       </main>
     );
   }
 
-  /*
-   * Keranjang kosong
-   */
+  // =====================================================
+  // CART KOSONG
+  // =====================================================
+
   if (cart.length === 0) {
     return (
       <main className="min-h-screen bg-gray-50">
+        {/* HEADER */}
+
         <header className="border-b border-gray-100 bg-white">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
             <Link
@@ -270,16 +418,22 @@ export default function CheckoutPage() {
 
             <Link
               href="/products"
-              className="text-sm font-medium text-gray-600 hover:text-black"
+              className="text-sm font-medium text-gray-600 transition hover:text-black"
             >
               Produk
             </Link>
           </div>
         </header>
 
+        {/* EMPTY */}
+
         <div className="mx-auto max-w-2xl px-6 py-20">
           <div className="rounded-3xl bg-white p-10 text-center shadow-sm">
-            <h1 className="text-2xl font-bold">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-xl">
+              🛒
+            </div>
+
+            <h1 className="mt-5 text-2xl font-bold">
               Keranjang kosong
             </h1>
 
@@ -290,7 +444,7 @@ export default function CheckoutPage() {
 
             <Link
               href="/products"
-              className="mt-6 inline-block rounded-xl bg-black px-6 py-3 text-sm font-semibold text-white"
+              className="mt-6 inline-block rounded-xl bg-black px-6 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
             >
               Lihat Produk
             </Link>
@@ -300,11 +454,22 @@ export default function CheckoutPage() {
     );
   }
 
+  // =====================================================
+  // TOTAL CART
+  // =====================================================
+
   const total = getCartTotal(cart);
+
+  // =====================================================
+  // CHECKOUT PAGE
+  // =====================================================
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* =================================================
+          HEADER
+      ================================================= */}
+
       <header className="border-b border-gray-100 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <Link
@@ -317,36 +482,42 @@ export default function CheckoutPage() {
           <nav className="flex items-center gap-6 text-sm">
             <Link
               href="/"
-              className="text-gray-600 hover:text-black"
+              className="text-gray-600 transition hover:text-black"
             >
               Beranda
             </Link>
 
             <Link
               href="/products"
-              className="text-gray-600 hover:text-black"
+              className="text-gray-600 transition hover:text-black"
             >
               Produk
             </Link>
 
             <Link
               href="/cart"
-              className="text-gray-600 hover:text-black"
+              className="text-gray-600 transition hover:text-black"
             >
               Keranjang
             </Link>
 
             <Link
-              href="/login"
+              href="/account"
               className="rounded-lg bg-black px-4 py-2 font-medium text-white"
             >
-              Login
+              Akun
             </Link>
           </nav>
         </div>
       </header>
 
+      {/* =================================================
+          CONTENT
+      ================================================= */}
+
       <div className="mx-auto max-w-6xl px-6 py-12">
+        {/* TITLE */}
+
         <div>
           <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">
             Checkout
@@ -362,18 +533,29 @@ export default function CheckoutPage() {
           </p>
         </div>
 
+        {/* =================================================
+            FORM
+        ================================================= */}
+
         <form
           onSubmit={handleSubmit}
           className="mt-10 grid gap-8 lg:grid-cols-[1fr_380px]"
         >
-          {/* Customer Information */}
+          {/* =================================================
+              LEFT
+          ================================================= */}
+
           <div className="space-y-6">
+            {/* CUSTOMER */}
+
             <section className="rounded-2xl bg-white p-6 shadow-sm">
               <h2 className="text-lg font-bold">
                 Informasi Pelanggan
               </h2>
 
               <div className="mt-6 space-y-5">
+                {/* NAME */}
+
                 <div>
                   <label
                     htmlFor="customerName"
@@ -392,10 +574,12 @@ export default function CheckoutPage() {
                       )
                     }
                     placeholder="Nama lengkap"
-                    className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-black"
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-black focus:ring-1 focus:ring-black"
                     required
                   />
                 </div>
+
+                {/* PHONE */}
 
                 <div>
                   <label
@@ -415,10 +599,12 @@ export default function CheckoutPage() {
                       )
                     }
                     placeholder="08xxxxxxxxxx"
-                    className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-black"
+                    className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-black focus:ring-1 focus:ring-black"
                     required
                   />
                 </div>
+
+                {/* ADDRESS */}
 
                 <div>
                   <label
@@ -438,10 +624,12 @@ export default function CheckoutPage() {
                     }
                     placeholder="Alamat lengkap pengiriman"
                     rows={4}
-                    className="mt-2 w-full resize-none rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-black"
+                    className="mt-2 w-full resize-none rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-black focus:ring-1 focus:ring-black"
                     required
                   />
                 </div>
+
+                {/* NOTES */}
 
                 <div>
                   <label
@@ -464,26 +652,30 @@ export default function CheckoutPage() {
                     }
                     placeholder="Contoh: Tolong jangan terlalu pedas."
                     rows={3}
-                    className="mt-2 w-full resize-none rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-black"
+                    className="mt-2 w-full resize-none rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-black focus:ring-1 focus:ring-black"
                   />
                 </div>
               </div>
             </section>
 
-            {/* Payment */}
+            {/* PAYMENT */}
+
             <section className="rounded-2xl bg-white p-6 shadow-sm">
               <h2 className="text-lg font-bold">
                 Metode Pembayaran
               </h2>
 
               <div className="mt-5 space-y-3">
+                {/* CASH */}
+
                 <label className="flex cursor-pointer items-center gap-4 rounded-xl border border-gray-200 p-4 transition hover:bg-gray-50">
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="cash"
                     checked={
-                      paymentMethod === "cash"
+                      paymentMethod ===
+                      "cash"
                     }
                     onChange={() =>
                       setPaymentMethod("cash")
@@ -501,6 +693,8 @@ export default function CheckoutPage() {
                     </p>
                   </div>
                 </label>
+
+                {/* BANK TRANSFER */}
 
                 <label className="flex cursor-pointer items-center gap-4 rounded-xl border border-gray-200 p-4 transition hover:bg-gray-50">
                   <input
@@ -533,18 +727,27 @@ export default function CheckoutPage() {
               </div>
             </section>
 
+            {/* ERROR */}
+
             {error && (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                {error}
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+                <p className="text-sm font-medium text-red-700">
+                  {error}
+                </p>
               </div>
             )}
           </div>
 
-          {/* Order Summary */}
+          {/* =================================================
+              RIGHT - ORDER SUMMARY
+          ================================================= */}
+
           <aside className="h-fit rounded-2xl bg-white p-6 shadow-sm">
             <h2 className="text-lg font-bold">
               Ringkasan Pesanan
             </h2>
+
+            {/* ITEMS */}
 
             <div className="mt-6 space-y-4">
               {cart.map((item) => (
@@ -552,6 +755,8 @@ export default function CheckoutPage() {
                   key={item.productId}
                   className="flex gap-4"
                 >
+                  {/* IMAGE */}
+
                   <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100">
                     {item.imageUrl ? (
                       <img
@@ -566,6 +771,8 @@ export default function CheckoutPage() {
                     )}
                   </div>
 
+                  {/* INFO */}
+
                   <div className="min-w-0 flex-1">
                     <p className="line-clamp-1 font-medium text-gray-900">
                       {item.name}
@@ -579,6 +786,8 @@ export default function CheckoutPage() {
                     </p>
                   </div>
 
+                  {/* SUBTOTAL */}
+
                   <p className="shrink-0 text-sm font-semibold">
                     {formatRupiah(
                       item.price *
@@ -589,7 +798,11 @@ export default function CheckoutPage() {
               ))}
             </div>
 
+            {/* SUMMARY */}
+
             <div className="mt-6 space-y-3 border-t border-gray-100 pt-6">
+              {/* SUBTOTAL */}
+
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">
                   Subtotal
@@ -599,6 +812,8 @@ export default function CheckoutPage() {
                   {formatRupiah(total)}
                 </span>
               </div>
+
+              {/* DISCOUNT */}
 
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">
@@ -610,6 +825,8 @@ export default function CheckoutPage() {
                 </span>
               </div>
 
+              {/* DELIVERY */}
+
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">
                   Biaya Pengiriman
@@ -619,6 +836,8 @@ export default function CheckoutPage() {
                   Rp0
                 </span>
               </div>
+
+              {/* TOTAL */}
 
               <div className="flex items-center justify-between border-t border-gray-100 pt-4">
                 <span className="font-semibold">
@@ -631,6 +850,8 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            {/* SUBMIT */}
+
             <button
               type="submit"
               disabled={isSubmitting}
@@ -641,9 +862,11 @@ export default function CheckoutPage() {
                 : "Buat Pesanan"}
             </button>
 
+            {/* BACK */}
+
             <Link
               href="/cart"
-              className="mt-3 block text-center text-sm font-medium text-gray-500 hover:text-black"
+              className="mt-3 block text-center text-sm font-medium text-gray-500 transition hover:text-black"
             >
               ← Kembali ke Keranjang
             </Link>
