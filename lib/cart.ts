@@ -121,7 +121,9 @@ export function clearCart() {
   saveCart([]);
 }
 
-export function getCartTotal(cart: CartItem[]) {
+export function getCartTotal(
+  cart: CartItem[]
+) {
   return cart.reduce(
     (total, item) =>
       total + item.price * item.quantity,
@@ -129,7 +131,9 @@ export function getCartTotal(cart: CartItem[]) {
   );
 }
 
-export function getCartCount(cart: CartItem[]) {
+export function getCartCount(
+  cart: CartItem[]
+) {
   return cart.reduce(
     (total, item) =>
       total + item.quantity,
