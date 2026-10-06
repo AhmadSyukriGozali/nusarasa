@@ -872,12 +872,14 @@ export default function CheckoutPage() {
                 >
                   {/* IMAGE */}
 
-                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                  <div className="relative aspect-square overflow-hidden bg-gray-100">
                     {item.imageUrl ? (
                       <Image
                         src={item.imageUrl}
                         alt={item.name}
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="64px"
+                        className="object-cover"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center text-[10px] text-gray-400">

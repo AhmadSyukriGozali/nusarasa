@@ -431,12 +431,14 @@ export default function AccountSettingsPage() {
             </p>
 
             <div className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-center">
-              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-100">
+              <div className="relative h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-100">
                 {previewUrl ? (
                   <Image
                     src={previewUrl}
                     alt={`Foto profil ${displayName}`}
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="96px"
+                    className="object-cover"
                   />
                 ) : (
                   <span className="text-3xl font-bold text-gray-500">

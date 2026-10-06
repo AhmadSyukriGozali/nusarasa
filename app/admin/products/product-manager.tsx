@@ -646,12 +646,14 @@ export default function ProductManager({
                 Preview
               </p>
 
-              <div className="flex aspect-video items-center justify-center overflow-hidden rounded-xl bg-gray-100">
+              <div className="relative aspect-video items-center justify-center overflow-hidden rounded-xl bg-gray-100">
                 {previewUrl ? (
                   <Image
                     src={previewUrl}
                     alt="Preview produk"
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="160px"
+                    className="object-cover"
                   />
                 ) : (
                   <span className="text-sm text-gray-400">
@@ -738,12 +740,14 @@ export default function ProductManager({
                 className="flex flex-col gap-5 p-6 lg:flex-row lg:items-center lg:justify-between"
               >
                 <div className="flex min-w-0 gap-4">
-                  <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100">
                     {product.image_url ? (
                       <Image
                         src={product.image_url}
                         alt={product.name}
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="64px"
+                        className="object-cover"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center text-xs text-gray-400">

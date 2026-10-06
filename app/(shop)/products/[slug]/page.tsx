@@ -160,12 +160,14 @@ export default async function ProductDetailPage({
           ================================================== */}
 
           <div>
-            <div className="aspect-square overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
+            <div className="relative aspect-square overflow-hidden bg-gray-100">
               {product.image_url ? (
-                <Image
-                  src={product.image_url}
+                <Image  
+                  src={product.image_url}  
                   alt={product.name}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center bg-gray-100">

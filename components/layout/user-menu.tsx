@@ -78,12 +78,14 @@ export default function UserMenu({
         className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2 transition hover:bg-gray-50"
       >
         {/* Avatar */}
-        <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gray-900 text-sm font-semibold text-white">
+        <div className="relative h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gray-900 text-sm font-semibold text-white">
           {avatarUrl ? (
             <Image
               src={avatarUrl}
               alt={name}
-              className="h-full w-full object-cover"
+              fill
+              sizes="40px"
+              className="object-cover"
             />
           ) : (
             initial
@@ -117,12 +119,14 @@ export default function UserMenu({
           {/* User Info */}
           <div className="border-b border-gray-100 p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-900 text-sm font-semibold text-white">
+              <div className="relative h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-900 text-sm font-semibold text-white">
                 {avatarUrl ? (
                   <Image
                     src={avatarUrl}
                     alt={name}
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="40px"
+                    className="object-cover"
                   />
                 ) : (
                   initial

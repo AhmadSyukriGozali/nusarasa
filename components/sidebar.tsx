@@ -570,12 +570,14 @@ function SidebarContent({
               onClick={mobile ? onNavigate : undefined}
               className="group flex min-w-0 items-center gap-3 rounded-xl px-2 py-2 transition-all duration-300 hover:bg-white/[0.06]"
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-black ring-1 ring-white/10">
+              <div className="relative h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-black ring-1 ring-white/10">
                 {avatarUrl ? (
                   <Image
                     src={avatarUrl}
                     alt={displayName}
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="40px"
+                    className="object-cover"
                   />
                 ) : (
                   displayName.charAt(0).toUpperCase()

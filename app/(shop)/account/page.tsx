@@ -311,12 +311,14 @@ export default async function AccountPage() {
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
               {/* AVATAR */}
 
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black text-2xl font-bold text-white">
+              <div className="relative h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black text-2xl font-bold text-white">
                 {profile.avatar_url ? (
                   <Image
                     src={profile.avatar_url}
                     alt={displayName}
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="80px"
+                    className="object-cover"
                   />
                 ) : (
                   avatarInitial
