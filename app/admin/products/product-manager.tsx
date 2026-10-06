@@ -3,18 +3,13 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatRupiah } from "@/lib/utils";
+import Image from "next/image";
 
 type Category = {
   id: string;
   name: string;
   slug: string;
 };
-
-type ProductCategory = {
-  id: string;
-  name: string;
-  slug: string;
-} | null;
 
 type Product = {
   id: string;
@@ -33,7 +28,7 @@ type Product = {
     id: string;
     name: string;
     slug: string;
-  }[];
+  }[] | null;
 };
 
 type ProductManagerProps = {
@@ -251,7 +246,7 @@ export default function ProductManager({
         );
       }
 
-      let productId =
+      const productId =
         editingProduct?.id ?? crypto.randomUUID();
 
       let imageUrl =
@@ -653,7 +648,7 @@ export default function ProductManager({
 
               <div className="flex aspect-video items-center justify-center overflow-hidden rounded-xl bg-gray-100">
                 {previewUrl ? (
-                  <img
+                  <Image
                     src={previewUrl}
                     alt="Preview produk"
                     className="h-full w-full object-cover"
@@ -745,7 +740,7 @@ export default function ProductManager({
                 <div className="flex min-w-0 gap-4">
                   <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100">
                     {product.image_url ? (
-                      <img
+                      <Image
                         src={product.image_url}
                         alt={product.name}
                         className="h-full w-full object-cover"
@@ -759,7 +754,7 @@ export default function ProductManager({
 
                   <div className="min-w-0">
                     <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                      {product.categories?.name ??
+                      {product.categories?.[0]?.name ??
                         "Tanpa kategori"}
                     </p>
 

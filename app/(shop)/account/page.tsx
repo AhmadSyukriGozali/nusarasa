@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/utils";
+import Image from "next/image";
 
 type Profile = {
   full_name: string | null;
@@ -312,7 +313,7 @@ export default async function AccountPage() {
 
               <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-black text-2xl font-bold text-white">
                 {profile.avatar_url ? (
-                  <img
+                  <Image
                     src={profile.avatar_url}
                     alt={displayName}
                     className="h-full w-full object-cover"

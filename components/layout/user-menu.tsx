@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
 type UserMenuProps = {
   name: string;
@@ -79,7 +80,7 @@ export default function UserMenu({
         {/* Avatar */}
         <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gray-900 text-sm font-semibold text-white">
           {avatarUrl ? (
-            <img
+            <Image
               src={avatarUrl}
               alt={name}
               className="h-full w-full object-cover"
@@ -118,7 +119,7 @@ export default function UserMenu({
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-900 text-sm font-semibold text-white">
                 {avatarUrl ? (
-                  <img
+                  <Image
                     src={avatarUrl}
                     alt={name}
                     className="h-full w-full object-cover"

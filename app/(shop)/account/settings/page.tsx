@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
 type Profile = {
   id: string;
@@ -432,7 +433,7 @@ export default function AccountSettingsPage() {
             <div className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-center">
               <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-100">
                 {previewUrl ? (
-                  <img
+                  <Image
                     src={previewUrl}
                     alt={`Foto profil ${displayName}`}
                     className="h-full w-full object-cover"

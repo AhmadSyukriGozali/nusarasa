@@ -89,11 +89,6 @@ export default async function OrdersPage() {
       order.status === "completed"
   ).length;
 
-  const cancelledOrders = orders.filter(
-    (order) =>
-      order.status === "cancelled"
-  ).length;
-
   // =====================================================
   // TOTAL BELANJA
   // =====================================================

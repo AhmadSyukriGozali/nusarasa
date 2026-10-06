@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import {
   getCart,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/cart";
 
 import { formatRupiah } from "@/lib/utils";
+import Image from "next/image";
 
 type PaymentMethod =
   | "cash"
@@ -30,10 +31,7 @@ type CreatedOrder = {
 
 export default function CheckoutPage() {
   const [cart, setCart] =
-    useState<CartItem[]>([]);
-
-  const [loaded, setLoaded] =
-    useState(false);
+  useState<CartItem[]>(() => getCart());
 
   const [customerName, setCustomerName] =
     useState("");
@@ -58,17 +56,6 @@ export default function CheckoutPage() {
 
   const [successOrder, setSuccessOrder] =
     useState<CreatedOrder | null>(null);
-
-  // ==================================================
-  // LOAD CART
-  // ==================================================
-
-  useEffect(() => {
-    const currentCart = getCart();
-
-    setCart(currentCart);
-    setLoaded(true);
-  }, []);
 
   // ==================================================
   // SUBMIT CHECKOUT
@@ -353,36 +340,6 @@ export default function CheckoutPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  // ==================================================
-  // LOADING
-  // ==================================================
-
-  if (!loaded) {
-    return (
-      <main className="min-h-screen bg-gray-50 text-gray-900">
-        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-          <div className="animate-pulse">
-            <div className="h-4 w-24 rounded bg-gray-200" />
-
-            <div className="mt-4 h-10 w-64 rounded bg-gray-200" />
-
-            <div className="mt-3 h-5 w-96 max-w-full rounded bg-gray-200" />
-          </div>
-
-          <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_380px]">
-            <div className="space-y-6">
-              <div className="h-80 animate-pulse rounded-2xl bg-white" />
-
-              <div className="h-56 animate-pulse rounded-2xl bg-white" />
-            </div>
-
-            <div className="h-96 animate-pulse rounded-2xl bg-white" />
-          </div>
-        </section>
-      </main>
-    );
   }
 
   // ==================================================
@@ -917,7 +874,7 @@ export default function CheckoutPage() {
 
                   <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100">
                     {item.imageUrl ? (
-                      <img
+                      <Image
                         src={item.imageUrl}
                         alt={item.name}
                         className="h-full w-full object-cover"

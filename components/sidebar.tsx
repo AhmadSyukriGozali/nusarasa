@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  type ComponentType,
+} from "react";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
 type SidebarProps = {
   isLoggedIn: boolean;
@@ -16,6 +21,59 @@ type SidebarProps = {
 type IconProps = {
   className?: string;
 };
+
+type NavigationItem = {
+  label: string;
+  href: string;
+  icon: ComponentType<IconProps>;
+  exact?: boolean;
+};
+
+const customerNavigation: NavigationItem[] = [
+  {
+    label: "Beranda",
+    href: "/",
+    icon: HomeIcon,
+    exact: true,
+  },
+  {
+    label: "Produk",
+    href: "/products",
+    icon: GridIcon,
+  },
+  {
+    label: "Keranjang",
+    href: "/cart",
+    icon: ShoppingCartIcon,
+  },
+];
+
+const accountNavigation: NavigationItem[] = [
+  {
+    label: "Akun Saya",
+    href: "/account",
+    icon: UserIcon,
+  },
+];
+
+const adminNavigation: NavigationItem[] = [
+  {
+    label: "Dashboard",
+    href: "/admin",
+    icon: HomeIcon,
+    exact: true,
+  },
+  {
+    label: "Pesanan",
+    href: "/admin/orders",
+    icon: ClipboardIcon,
+  },
+  {
+    label: "Produk",
+    href: "/admin/products",
+    icon: PackageIcon,
+  },
+];
 
 function HomeIcon({ className = "h-5 w-5" }: IconProps) {
   return (
@@ -149,7 +207,7 @@ function LogInIcon({ className = "h-5 w-5" }: IconProps) {
       aria-hidden="true"
     >
       <path d="M14 4h5v16h-5" />
-      <path d="M10 8l4 4-4 4" />
+      <path d="m10 8 4 4-4 4" />
       <path d="M14 12H3" />
     </svg>
   );
@@ -211,7 +269,7 @@ function LogOutIcon({
       aria-hidden="true"
     >
       <path d="M10 4H5v16h5" />
-      <path d="M14 8l4 4-4 4" />
+      <path d="m14 8 4 4-4 4" />
       <path d="M18 12H7" />
     </svg>
   );
@@ -288,12 +346,303 @@ function PanelIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
-type NavigationItem = {
-  label: string;
-  href: string;
-  icon: (props: IconProps) => React.ReactNode;
-  exact?: boolean;
+type NavigationLinkProps = {
+  item: NavigationItem;
+  pathname: string;
+  onNavigate: () => void;
 };
+
+function NavigationLink({
+  item,
+  pathname,
+  onNavigate,
+}: NavigationLinkProps) {
+  const active = item.exact
+    ? pathname === item.href
+    : pathname === item.href ||
+      pathname.startsWith(`${item.href}/`);
+
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      className={`group relative flex h-[46px] items-center gap-3 overflow-hidden whitespace-nowrap rounded-xl px-3.5 text-sm font-medium transition-all duration-300 ${
+        active
+          ? "bg-white/[0.12] text-white shadow-sm"
+          : "text-white/70 hover:bg-white/[0.07] hover:text-white"
+      }`}
+    >
+      <span
+        className={`absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full transition-all duration-300 ${
+          active
+            ? "bg-white opacity-100"
+            : "bg-white opacity-0 group-hover:opacity-30"
+        }`}
+      />
+
+      <span
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${
+          active
+            ? "bg-white/10 text-white"
+            : "text-white/60 group-hover:bg-white/5 group-hover:text-white"
+        }`}
+      >
+        <item.icon className="h-[19px] w-[19px]" />
+      </span>
+
+      <span className="truncate">{item.label}</span>
+
+      <span
+        className={`ml-auto transition-all duration-300 ${
+          active
+            ? "translate-x-0 opacity-100"
+            : "translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"
+        }`}
+      >
+        <ChevronIcon className="h-4 w-4" />
+      </span>
+    </Link>
+  );
+}
+
+type SidebarContentProps = {
+  mobile?: boolean;
+  isLoggedIn: boolean;
+  isAdmin: boolean;
+  displayName: string;
+  role: string;
+  avatarUrl?: string | null;
+  pathname: string;
+  onNavigate: () => void;
+  onLogout: () => void;
+  loggingOut: boolean;
+};
+
+function SidebarContent({
+  mobile = false,
+  isLoggedIn,
+  isAdmin,
+  displayName,
+  role,
+  avatarUrl,
+  pathname,
+  onNavigate,
+  onLogout,
+  loggingOut,
+}: SidebarContentProps) {
+  return (
+    <div className="flex h-full flex-col">
+      {/* BRAND */}
+      <div className="flex h-[82px] shrink-0 items-center border-b border-white/[0.08] px-5">
+        <Link
+          href="/"
+          onClick={mobile ? onNavigate : undefined}
+          className="group flex min-w-0 items-center gap-3"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-sm font-black tracking-tight text-black shadow-lg shadow-black/20 transition-transform duration-300 group-hover:scale-105">
+            NR
+          </div>
+
+          <div className="min-w-0">
+            <p className="truncate text-[17px] font-bold tracking-tight text-white">
+              NusaRasa
+            </p>
+
+            <p className="truncate text-[11px] font-medium tracking-wide text-white/40">
+              UMKM • LOCAL TASTE
+            </p>
+          </div>
+        </Link>
+      </div>
+
+      {/* NAVIGATION */}
+      <div className="flex-1 overflow-y-auto px-3 py-5">
+        <div className="space-y-7">
+          {/* MENU UTAMA */}
+          <section>
+            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
+              Menu Utama
+            </p>
+
+            <nav className="space-y-1">
+              {customerNavigation.map((item) => (
+                <NavigationLink
+                  key={item.href}
+                  item={item}
+                  pathname={pathname}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </nav>
+          </section>
+
+          {/* PENGGUNA */}
+          {isLoggedIn && (
+            <section>
+              <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
+                Pengguna
+              </p>
+
+              <nav className="space-y-1">
+                {accountNavigation.map((item) => (
+                  <NavigationLink
+                    key={item.href}
+                    item={item}
+                    pathname={pathname}
+                    onNavigate={onNavigate}
+                  />
+                ))}
+              </nav>
+            </section>
+          )}
+
+          {/* ADMIN */}
+          {isLoggedIn && isAdmin && (
+            <section>
+              <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
+                Administrasi
+              </p>
+
+              <nav className="space-y-1">
+                {adminNavigation.map((item) => (
+                  <NavigationLink
+                    key={item.href}
+                    item={item}
+                    pathname={pathname}
+                    onNavigate={onNavigate}
+                  />
+                ))}
+              </nav>
+            </section>
+          )}
+
+          {/* GUEST */}
+          {!isLoggedIn && (
+            <section>
+              <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
+                Akses
+              </p>
+
+              <nav className="space-y-1">
+                <Link
+                  href="/login"
+                  onClick={onNavigate}
+                  className="group flex h-[46px] items-center gap-3 overflow-hidden whitespace-nowrap rounded-xl px-3.5 text-sm font-medium text-white/70 transition-all duration-300 hover:bg-white/[0.07] hover:text-white"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/60 transition-all duration-300 group-hover:bg-white/5 group-hover:text-white">
+                    <LogInIcon className="h-[19px] w-[19px]" />
+                  </span>
+
+                  <span>Login</span>
+
+                  <span className="ml-auto translate-x-1 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-50">
+                    <ChevronIcon className="h-4 w-4" />
+                  </span>
+                </Link>
+
+                <Link
+                  href="/register"
+                  onClick={onNavigate}
+                  className="group flex h-[46px] items-center gap-3 overflow-hidden whitespace-nowrap rounded-xl bg-white px-3.5 text-sm font-semibold text-black transition-all duration-300 hover:bg-white/90"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-black/5 text-black">
+                    <UserPlusIcon className="h-[19px] w-[19px]" />
+                  </span>
+
+                  <span>Daftar</span>
+
+                  <span className="ml-auto translate-x-1 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-60">
+                    <ChevronIcon className="h-4 w-4" />
+                  </span>
+                </Link>
+              </nav>
+            </section>
+          )}
+        </div>
+      </div>
+
+      {/* PROFILE */}
+      <div className="shrink-0 border-t border-white/[0.08] p-3">
+        {isLoggedIn ? (
+          <div className="rounded-2xl bg-white/[0.05] p-2">
+            <Link
+              href="/account"
+              onClick={mobile ? onNavigate : undefined}
+              className="group flex min-w-0 items-center gap-3 rounded-xl px-2 py-2 transition-all duration-300 hover:bg-white/[0.06]"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-black ring-1 ring-white/10">
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={displayName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  displayName.charAt(0).toUpperCase()
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-white">
+                  {displayName}
+                </p>
+
+                <p className="truncate text-xs capitalize text-white/40">
+                  {role}
+                </p>
+              </div>
+
+              <ChevronIcon className="h-4 w-4 shrink-0 text-white/30 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-white/60" />
+            </Link>
+
+            <div className="mt-1">
+              <button
+                type="button"
+                onClick={onLogout}
+                disabled={loggingOut}
+                className="group flex h-[42px] w-full items-center gap-3 rounded-xl px-2.5 text-sm font-medium text-white/50 transition-all duration-300 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 group-hover:bg-red-500/10">
+                  <LogOutIcon className="h-[18px] w-[18px]" />
+                </span>
+
+                <span>
+                  {loggingOut ? "Logout..." : "Logout"}
+                </span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.07] text-white/40">
+                <UserIcon className="h-[18px] w-[18px]" />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-white/50">
+                  Belum login
+                </p>
+
+                <p className="truncate text-[11px] text-white/25">
+                  Masuk untuk melanjutkan
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-3 flex items-center justify-between px-2">
+          <span className="text-[10px] text-white/20">
+            © NusaRasa
+          </span>
+
+          <SettingsIcon className="h-3.5 w-3.5 text-white/15" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Sidebar({
   isLoggedIn,
@@ -304,69 +653,11 @@ export default function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-
   const supabase = createClient();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopOpen, setDesktopOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-
-  const customerNavigation: NavigationItem[] = [
-    {
-      label: "Beranda",
-      href: "/",
-      icon: HomeIcon,
-      exact: true,
-    },
-    {
-      label: "Produk",
-      href: "/products",
-      icon: GridIcon,
-    },
-    {
-      label: "Keranjang",
-      href: "/cart",
-      icon: ShoppingCartIcon,
-    },
-  ];
-
-  const accountNavigation: NavigationItem[] = [
-    {
-      label: "Akun Saya",
-      href: "/account",
-      icon: UserIcon,
-    },
-  ];
-
-  const adminNavigation: NavigationItem[] = [
-    {
-      label: "Dashboard",
-      href: "/admin",
-      icon: HomeIcon,
-      exact: true,
-    },
-    {
-      label: "Pesanan",
-      href: "/admin/orders",
-      icon: ClipboardIcon,
-    },
-    {
-      label: "Produk",
-      href: "/admin/products",
-      icon: PackageIcon,
-    },
-  ];
-
-  function isActive(item: NavigationItem) {
-    if (item.exact) {
-      return pathname === item.href;
-    }
-
-    return (
-      pathname === item.href ||
-      pathname.startsWith(`${item.href}/`)
-    );
-  }
 
   function closeMobileMenu() {
     setMobileOpen(false);
@@ -407,279 +698,6 @@ export default function Sidebar({
     };
   }, [mobileOpen]);
 
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
-  function NavigationLink({
-    item,
-  }: {
-    item: NavigationItem;
-  }) {
-    const active = isActive(item);
-
-    return (
-      <Link
-        href={item.href}
-        onClick={closeMobileMenu}
-        className={`group relative flex h-[46px] items-center gap-3 overflow-hidden whitespace-nowrap rounded-xl px-3.5 text-sm font-medium transition-all duration-300 ${
-          active
-            ? "bg-white/[0.12] text-white shadow-sm"
-            : "text-white/70 hover:bg-white/[0.07] hover:text-white"
-        }`}
-      >
-        <span
-          className={`absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full transition-all duration-300 ${
-            active
-              ? "bg-white opacity-100"
-              : "bg-white opacity-0 group-hover:opacity-30"
-          }`}
-        />
-
-        <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${
-            active
-              ? "bg-white/10 text-white"
-              : "text-white/60 group-hover:bg-white/5 group-hover:text-white"
-          }`}
-        >
-          <item.icon className="h-[19px] w-[19px]" />
-        </span>
-
-        <span className="truncate">
-          {item.label}
-        </span>
-
-        <span
-          className={`ml-auto transition-all duration-300 ${
-            active
-              ? "translate-x-0 opacity-100"
-              : "translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"
-          }`}
-        >
-          <ChevronIcon className="h-4 w-4" />
-        </span>
-      </Link>
-    );
-  }
-
-  function SidebarContent({
-    mobile = false,
-  }: {
-    mobile?: boolean;
-  }) {
-    return (
-      <div className="flex h-full flex-col">
-        {/* BRAND */}
-        <div className="flex h-[82px] shrink-0 items-center border-b border-white/[0.08] px-5">
-          <Link
-            href="/"
-            onClick={mobile ? closeMobileMenu : undefined}
-            className="group flex min-w-0 items-center gap-3"
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-sm font-black tracking-tight text-black shadow-lg shadow-black/20 transition-transform duration-300 group-hover:scale-105">
-              NR
-            </div>
-
-            <div className="min-w-0">
-              <p className="truncate text-[17px] font-bold tracking-tight text-white">
-                NusaRasa
-              </p>
-
-              <p className="truncate text-[11px] font-medium tracking-wide text-white/40">
-                UMKM • LOCAL TASTE
-              </p>
-            </div>
-          </Link>
-        </div>
-
-        {/* NAVIGATION */}
-        <div className="flex-1 overflow-y-auto px-3 py-5">
-          <div className="space-y-7">
-            {/* MENU UTAMA */}
-            <section>
-              <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
-                Menu Utama
-              </p>
-
-              <nav className="space-y-1">
-                {customerNavigation.map((item) => (
-                  <NavigationLink
-                    key={item.href}
-                    item={item}
-                  />
-                ))}
-              </nav>
-            </section>
-
-            {/* PENGGUNA */}
-            {isLoggedIn && (
-              <section>
-                <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
-                  Pengguna
-                </p>
-
-                <nav className="space-y-1">
-                  {accountNavigation.map((item) => (
-                    <NavigationLink
-                      key={item.href}
-                      item={item}
-                    />
-                  ))}
-                </nav>
-              </section>
-            )}
-
-            {/* ADMIN */}
-            {isLoggedIn && isAdmin && (
-              <section>
-                <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
-                  Administrasi
-                </p>
-
-                <nav className="space-y-1">
-                  {adminNavigation.map((item) => (
-                    <NavigationLink
-                      key={item.href}
-                      item={item}
-                    />
-                  ))}
-                </nav>
-              </section>
-            )}
-
-            {/* GUEST */}
-            {!isLoggedIn && (
-              <section>
-                <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
-                  Akses
-                </p>
-
-                <nav className="space-y-1">
-                  <Link
-                    href="/login"
-                    onClick={closeMobileMenu}
-                    className="group flex h-[46px] items-center gap-3 overflow-hidden whitespace-nowrap rounded-xl px-3.5 text-sm font-medium text-white/70 transition-all duration-300 hover:bg-white/[0.07] hover:text-white"
-                  >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/60 transition-all duration-300 group-hover:bg-white/5 group-hover:text-white">
-                      <LogInIcon className="h-[19px] w-[19px]" />
-                    </span>
-
-                    <span>Login</span>
-
-                    <span className="ml-auto translate-x-1 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-50">
-                      <ChevronIcon className="h-4 w-4" />
-                    </span>
-                  </Link>
-
-                  <Link
-                    href="/register"
-                    onClick={closeMobileMenu}
-                    className="group flex h-[46px] items-center gap-3 overflow-hidden whitespace-nowrap rounded-xl bg-white px-3.5 text-sm font-semibold text-black transition-all duration-300 hover:bg-white/90"
-                  >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-black/5 text-black">
-                      <UserPlusIcon className="h-[19px] w-[19px]" />
-                    </span>
-
-                    <span>Daftar</span>
-
-                    <span className="ml-auto translate-x-1 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-60">
-                      <ChevronIcon className="h-4 w-4" />
-                    </span>
-                  </Link>
-                </nav>
-              </section>
-            )}
-          </div>
-        </div>
-
-        {/* PROFILE */}
-        <div className="shrink-0 border-t border-white/[0.08] p-3">
-          {isLoggedIn ? (
-            <div className="rounded-2xl bg-white/[0.05] p-2">
-              <Link
-                href="/account"
-                onClick={mobile ? closeMobileMenu : undefined}
-                className="group flex min-w-0 items-center gap-3 rounded-xl px-2 py-2 transition-all duration-300 hover:bg-white/[0.06]"
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-black ring-1 ring-white/10">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={displayName}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    displayName
-                      .charAt(0)
-                      .toUpperCase()
-                  )}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-white">
-                    {displayName}
-                  </p>
-
-                  <p className="truncate text-xs capitalize text-white/40">
-                    {role}
-                  </p>
-                </div>
-
-                <ChevronIcon className="h-4 w-4 shrink-0 text-white/30 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-white/60" />
-              </Link>
-
-              <div className="mt-1">
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  disabled={loggingOut}
-                  className="group flex h-[42px] w-full items-center gap-3 rounded-xl px-2.5 text-sm font-medium text-white/50 transition-all duration-300 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 group-hover:bg-red-500/10">
-                    <LogOutIcon className="h-[18px] w-[18px]" />
-                  </span>
-
-                  <span>
-                    {loggingOut
-                      ? "Logout..."
-                      : "Logout"}
-                  </span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.07] text-white/40">
-                  <UserIcon className="h-[18px] w-[18px]" />
-                </div>
-
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-white/50">
-                    Belum login
-                  </p>
-
-                  <p className="truncate text-[11px] text-white/25">
-                    Masuk untuk melanjutkan
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-3 flex items-center justify-between px-2">
-            <span className="text-[10px] text-white/20">
-              © NusaRasa
-            </span>
-
-            <SettingsIcon className="h-3.5 w-3.5 text-white/15" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       {/* ==================================================
@@ -687,14 +705,12 @@ export default function Sidebar({
       ================================================== */}
 
       <div className="hidden lg:block">
-        {/* Invisible hover trigger */}
         <div
           className="fixed inset-y-0 left-0 z-[60] w-5"
           onMouseEnter={() => setDesktopOpen(true)}
           aria-hidden="true"
         />
 
-        {/* Sidebar */}
         <aside
           onMouseEnter={() => setDesktopOpen(true)}
           onMouseLeave={() => setDesktopOpen(false)}
@@ -704,9 +720,18 @@ export default function Sidebar({
               : "-translate-x-[calc(100%-12px)]"
           }`}
         >
-          <SidebarContent />
+          <SidebarContent
+            isLoggedIn={isLoggedIn}
+            isAdmin={isAdmin}
+            displayName={displayName}
+            role={role}
+            avatarUrl={avatarUrl}
+            pathname={pathname}
+            onNavigate={() => undefined}
+            onLogout={handleLogout}
+            loggingOut={loggingOut}
+          />
 
-          {/* Desktop collapsed handle */}
           {!desktopOpen && (
             <div className="absolute inset-y-0 right-0 flex w-3 items-center justify-center">
               <div className="h-20 w-1 rounded-full bg-white/20 transition-colors duration-300 hover:bg-white/40" />
@@ -714,7 +739,6 @@ export default function Sidebar({
           )}
         </aside>
 
-        {/* Small fixed trigger indicator */}
         <div
           className={`fixed left-0 top-1/2 z-[55] flex h-16 w-3 -translate-y-1/2 items-center justify-center transition-opacity duration-300 ${
             desktopOpen
@@ -734,6 +758,7 @@ export default function Sidebar({
       <div className="fixed inset-x-0 top-0 z-40 flex h-[68px] items-center justify-between border-b border-gray-200 bg-white/95 px-4 backdrop-blur-xl lg:hidden">
         <Link
           href="/"
+          onClick={closeMobileMenu}
           className="flex items-center gap-2.5"
         >
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-black text-xs font-black text-white">
@@ -798,7 +823,18 @@ export default function Sidebar({
           </button>
         </div>
 
-        <SidebarContent mobile />
+        <SidebarContent
+          mobile
+          isLoggedIn={isLoggedIn}
+          isAdmin={isAdmin}
+          displayName={displayName}
+          role={role}
+          avatarUrl={avatarUrl}
+          pathname={pathname}
+          onNavigate={closeMobileMenu}
+          onLogout={handleLogout}
+          loggingOut={loggingOut}
+        />
       </aside>
 
       {/* ==================================================

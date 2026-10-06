@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/utils";
 import AddToCart from "@/components/products/add-to-cart";
+import Image from "next/image";
 
 type ProductDetailPageProps = {
   params: Promise<{
@@ -161,7 +162,7 @@ export default async function ProductDetailPage({
           <div>
             <div className="aspect-square overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
               {product.image_url ? (
-                <img
+                <Image
                   src={product.image_url}
                   alt={product.name}
                   className="h-full w-full object-cover"

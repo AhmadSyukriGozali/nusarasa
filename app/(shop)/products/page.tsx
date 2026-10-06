@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/utils";
+import Image from "next/image";
 
 type ProductsPageProps = {
   searchParams: Promise<{
@@ -251,7 +252,7 @@ export default async function ProductsPage({
 
                 <div className="aspect-square overflow-hidden bg-gray-100">
                   {product.image_url ? (
-                    <img
+                    <Image
                       src={product.image_url}
                       alt={product.name}
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"

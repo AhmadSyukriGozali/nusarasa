@@ -13,6 +13,7 @@ import {
 
 import { formatRupiah } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
 export default function CartPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -258,7 +259,7 @@ export default function CartPage() {
 
                     <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100 sm:h-28 sm:w-28">
                       {item.imageUrl ? (
-                        <img
+                        <Image
                           src={item.imageUrl}
                           alt={item.name}
                           className="h-full w-full object-cover"

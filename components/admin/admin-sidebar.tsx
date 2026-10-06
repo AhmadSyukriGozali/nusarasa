@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  type ComponentType,
+} from "react";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
 type IconProps = {
   className?: string;
@@ -12,9 +17,33 @@ type IconProps = {
 type NavigationItem = {
   label: string;
   href: string;
-  icon: (props: IconProps) => React.ReactNode;
+  icon: ComponentType<IconProps>;
   exact?: boolean;
 };
+
+const mainNavigation: NavigationItem[] = [
+  {
+    label: "Dashboard",
+    href: "/admin",
+    icon: DashboardIcon,
+    exact: true,
+  },
+  {
+    label: "Pesanan",
+    href: "/admin/orders",
+    icon: ClipboardIcon,
+  },
+];
+
+const storeNavigation: NavigationItem[] = [
+  {
+    label: "Produk",
+    href: "/admin/products",
+    icon: PackageIcon,
+  },
+];
+
+const systemNavigation: NavigationItem[] = [];
 
 function DashboardIcon({
   className = "h-5 w-5",
@@ -221,49 +250,259 @@ function ChevronIcon({
   );
 }
 
-function UserIcon({
-  className = "h-5 w-5",
-}: IconProps) {
+type NavigationLinkProps = {
+  item: NavigationItem;
+  pathname: string;
+  onNavigate: () => void;
+};
+
+function NavigationLink({
+  item,
+  pathname,
+  onNavigate,
+}: NavigationLinkProps) {
+  const active = item.exact
+    ? pathname === item.href
+    : pathname === item.href ||
+      pathname.startsWith(`${item.href}/`);
+
   return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      className={`group relative flex h-[46px] items-center gap-3 overflow-hidden whitespace-nowrap rounded-xl px-3.5 text-sm font-medium transition-all duration-300 ${
+        active
+          ? "bg-white/[0.12] text-white shadow-sm"
+          : "text-white/70 hover:bg-white/[0.07] hover:text-white"
+      }`}
     >
-      <circle cx="12" cy="8" r="3.5" />
-      <path d="M5 20a7 7 0 0 1 14 0" />
-    </svg>
+      <span
+        className={`absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full transition-all duration-300 ${
+          active
+            ? "bg-white opacity-100"
+            : "bg-white opacity-0 group-hover:opacity-30"
+        }`}
+      />
+
+      <span
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${
+          active
+            ? "bg-white/10 text-white"
+            : "text-white/60 group-hover:bg-white/5 group-hover:text-white"
+        }`}
+      >
+        <item.icon className="h-[19px] w-[19px]" />
+      </span>
+
+      <span className="truncate">
+        {item.label}
+      </span>
+
+      <span
+        className={`ml-auto transition-all duration-300 ${
+          active
+            ? "translate-x-0 opacity-100"
+            : "translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"
+        }`}
+      >
+        <ChevronIcon className="h-4 w-4" />
+      </span>
+    </Link>
   );
 }
 
-const mainNavigation: NavigationItem[] = [
-  {
-    label: "Dashboard",
-    href: "/admin",
-    icon: DashboardIcon,
-    exact: true,
-  },
-  {
-    label: "Pesanan",
-    href: "/admin/orders",
-    icon: ClipboardIcon,
-  },
-];
+type NavigationSectionProps = {
+  title: string;
+  items: NavigationItem[];
+  pathname: string;
+  onNavigate: () => void;
+};
 
-const storeNavigation: NavigationItem[] = [
-  {
-    label: "Produk",
-    href: "/admin/products",
-    icon: PackageIcon,
-  },
-];
+function NavigationSection({
+  title,
+  items,
+  pathname,
+  onNavigate,
+}: NavigationSectionProps) {
+  if (items.length === 0) {
+    return null;
+  }
 
-const systemNavigation: NavigationItem[] = [];
+  return (
+    <section>
+      <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
+        {title}
+      </p>
+
+      <nav className="space-y-1">
+        {items.map((item) => (
+          <NavigationLink
+            key={item.href}
+            item={item}
+            pathname={pathname}
+            onNavigate={onNavigate}
+          />
+        ))}
+      </nav>
+    </section>
+  );
+}
+
+type SidebarContentProps = {
+  pathname: string;
+  displayName: string;
+  avatarUrl: string | null;
+  loggingOut: boolean;
+  onNavigate: () => void;
+  onLogout: () => void;
+};
+
+function SidebarContent({
+  pathname,
+  displayName,
+  avatarUrl,
+  loggingOut,
+  onNavigate,
+  onLogout,
+}: SidebarContentProps) {
+  return (
+    <div className="flex h-full flex-col">
+      {/* BRAND */}
+      <div className="flex h-[82px] shrink-0 items-center border-b border-white/[0.08] px-5">
+        <Link
+          href="/admin"
+          onClick={onNavigate}
+          className="group flex min-w-0 items-center gap-3"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-sm font-black tracking-tight text-black shadow-lg shadow-black/20 transition-transform duration-300 group-hover:scale-105">
+            NR
+          </div>
+
+          <div className="min-w-0">
+            <p className="truncate text-[17px] font-bold tracking-tight text-white">
+              NusaRasa
+            </p>
+
+            <p className="truncate text-[11px] font-medium tracking-wide text-white/40">
+              ADMIN PANEL
+            </p>
+          </div>
+        </Link>
+      </div>
+
+      {/* NAVIGATION */}
+      <div className="flex-1 overflow-y-auto px-3 py-5">
+        <div className="space-y-7">
+          <NavigationSection
+            title="Utama"
+            items={mainNavigation}
+            pathname={pathname}
+            onNavigate={onNavigate}
+          />
+
+          <NavigationSection
+            title="Toko"
+            items={storeNavigation}
+            pathname={pathname}
+            onNavigate={onNavigate}
+          />
+
+          <NavigationSection
+            title="Sistem"
+            items={systemNavigation}
+            pathname={pathname}
+            onNavigate={onNavigate}
+          />
+
+          {/* LIHAT TOKO */}
+          <section>
+            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
+              Akses
+            </p>
+
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onNavigate}
+              className="group flex h-[46px] items-center gap-3 overflow-hidden whitespace-nowrap rounded-xl px-3.5 text-sm font-medium text-white/70 transition-all duration-300 hover:bg-white/[0.07] hover:text-white"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/60 transition-all duration-300 group-hover:bg-white/5 group-hover:text-white">
+                <StoreIcon className="h-[19px] w-[19px]" />
+              </span>
+
+              <span className="truncate">
+                Lihat Toko
+              </span>
+
+              <span className="ml-auto opacity-40 transition-all duration-300 group-hover:opacity-70">
+                <ExternalLinkIcon className="h-4 w-4" />
+              </span>
+            </Link>
+          </section>
+        </div>
+      </div>
+
+      {/* PROFILE */}
+      <div className="shrink-0 border-t border-white/[0.08] p-3">
+        <div className="rounded-2xl bg-white/[0.05] p-2">
+          <Link
+            href="/account"
+            onClick={onNavigate}
+            className="group flex min-w-0 items-center gap-3 rounded-xl px-2 py-2 transition-all duration-300 hover:bg-white/[0.06]"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-black ring-1 ring-white/10">
+              {avatarUrl ? (
+                <Image
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                displayName.charAt(0).toUpperCase()
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-white">
+                {displayName}
+              </p>
+
+              <p className="truncate text-xs text-white/40">
+                Administrator
+              </p>
+            </div>
+
+            <ChevronIcon className="h-4 w-4 shrink-0 text-white/30 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-white/60" />
+          </Link>
+
+          <button
+            type="button"
+            onClick={onLogout}
+            disabled={loggingOut}
+            className="group mt-1 flex h-[42px] w-full items-center gap-3 rounded-xl px-2.5 text-sm font-medium text-white/50 transition-all duration-300 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 group-hover:bg-red-500/10">
+              <LogOutIcon className="h-[18px] w-[18px]" />
+            </span>
+
+            <span>
+              {loggingOut ? "Logout..." : "Logout"}
+            </span>
+          </button>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between px-2">
+          <span className="text-[10px] text-white/20">
+            © NusaRasa
+          </span>
+
+          <SettingsIcon className="h-3.5 w-3.5 text-white/15" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -273,14 +512,17 @@ export default function AdminSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopOpen, setDesktopOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [displayName, setDisplayName] = useState("Administrator");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState(
+    "Administrator"
+  );
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     async function loadProfile() {
-      const {
-        data: claimsData,
-      } = await supabase.auth.getClaims();
+      const { data: claimsData } =
+        await supabase.auth.getClaims();
 
       const userId = claimsData?.claims?.sub;
 
@@ -288,9 +530,7 @@ export default function AdminSidebar() {
         return;
       }
 
-      const {
-        data: profile,
-      } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
         .select("full_name, avatar_url")
         .eq("id", userId)
@@ -320,21 +560,6 @@ export default function AdminSidebar() {
       document.body.style.overflow = "";
     };
   }, [mobileOpen]);
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
-  function isActive(item: NavigationItem) {
-    if (item.exact) {
-      return pathname === item.href;
-    }
-
-    return (
-      pathname === item.href ||
-      pathname.startsWith(`${item.href}/`)
-    );
-  }
 
   function closeMobileMenu() {
     setMobileOpen(false);
@@ -367,225 +592,6 @@ export default function AdminSidebar() {
     router.refresh();
   }
 
-  function NavigationLink({
-    item,
-  }: {
-    item: NavigationItem;
-  }) {
-    const active = isActive(item);
-
-    return (
-      <Link
-        href={item.href}
-        onClick={closeMobileMenu}
-        className={`group relative flex h-[46px] items-center gap-3 overflow-hidden whitespace-nowrap rounded-xl px-3.5 text-sm font-medium transition-all duration-300 ${
-          active
-            ? "bg-white/[0.12] text-white shadow-sm"
-            : "text-white/70 hover:bg-white/[0.07] hover:text-white"
-        }`}
-      >
-        <span
-          className={`absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full transition-all duration-300 ${
-            active
-              ? "bg-white opacity-100"
-              : "bg-white opacity-0 group-hover:opacity-30"
-          }`}
-        />
-
-        <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${
-            active
-              ? "bg-white/10 text-white"
-              : "text-white/60 group-hover:bg-white/5 group-hover:text-white"
-          }`}
-        >
-          <item.icon className="h-[19px] w-[19px]" />
-        </span>
-
-        <span className="truncate">
-          {item.label}
-        </span>
-
-        <span
-          className={`ml-auto transition-all duration-300 ${
-            active
-              ? "translate-x-0 opacity-100"
-              : "translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"
-          }`}
-        >
-          <ChevronIcon className="h-4 w-4" />
-        </span>
-      </Link>
-    );
-  }
-
-  function NavigationSection({
-    title,
-    items,
-  }: {
-    title: string;
-    items: NavigationItem[];
-  }) {
-    if (items.length === 0) {
-      return null;
-    }
-
-    return (
-      <section>
-        <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
-          {title}
-        </p>
-
-        <nav className="space-y-1">
-          {items.map((item) => (
-            <NavigationLink
-              key={item.href}
-              item={item}
-            />
-          ))}
-        </nav>
-      </section>
-    );
-  }
-
-  function SidebarContent() {
-    return (
-      <div className="flex h-full flex-col">
-        {/* BRAND */}
-        <div className="flex h-[82px] shrink-0 items-center border-b border-white/[0.08] px-5">
-          <Link
-            href="/admin"
-            onClick={closeMobileMenu}
-            className="group flex min-w-0 items-center gap-3"
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-sm font-black tracking-tight text-black shadow-lg shadow-black/20 transition-transform duration-300 group-hover:scale-105">
-              NR
-            </div>
-
-            <div className="min-w-0">
-              <p className="truncate text-[17px] font-bold tracking-tight text-white">
-                NusaRasa
-              </p>
-
-              <p className="truncate text-[11px] font-medium tracking-wide text-white/40">
-                ADMIN PANEL
-              </p>
-            </div>
-          </Link>
-        </div>
-
-        {/* NAVIGATION */}
-        <div className="flex-1 overflow-y-auto px-3 py-5">
-          <div className="space-y-7">
-            <NavigationSection
-              title="Utama"
-              items={mainNavigation}
-            />
-
-            <NavigationSection
-              title="Toko"
-              items={storeNavigation}
-            />
-
-            <NavigationSection
-              title="Sistem"
-              items={systemNavigation}
-            />
-
-            {/* LIHAT TOKO */}
-            <section>
-              <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
-                Akses
-              </p>
-
-              <Link
-                href="/"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={closeMobileMenu}
-                className="group flex h-[46px] items-center gap-3 overflow-hidden whitespace-nowrap rounded-xl px-3.5 text-sm font-medium text-white/70 transition-all duration-300 hover:bg-white/[0.07] hover:text-white"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/60 transition-all duration-300 group-hover:bg-white/5 group-hover:text-white">
-                  <StoreIcon className="h-[19px] w-[19px]" />
-                </span>
-
-                <span className="truncate">
-                  Lihat Toko
-                </span>
-
-                <span className="ml-auto opacity-40 transition-all duration-300 group-hover:opacity-70">
-                  <ExternalLinkIcon className="h-4 w-4" />
-                </span>
-              </Link>
-            </section>
-          </div>
-        </div>
-
-        {/* PROFILE */}
-        <div className="shrink-0 border-t border-white/[0.08] p-3">
-          <div className="rounded-2xl bg-white/[0.05] p-2">
-            <Link
-              href="/account"
-              onClick={closeMobileMenu}
-              className="group flex min-w-0 items-center gap-3 rounded-xl px-2 py-2 transition-all duration-300 hover:bg-white/[0.06]"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-black ring-1 ring-white/10">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={displayName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  displayName
-                    .charAt(0)
-                    .toUpperCase()
-                )}
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-white">
-                  {displayName}
-                </p>
-
-                <p className="truncate text-xs capitalize text-white/40">
-                  Administrator
-                </p>
-              </div>
-
-              <ChevronIcon className="h-4 w-4 shrink-0 text-white/30 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-white/60" />
-            </Link>
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              disabled={loggingOut}
-              className="group mt-1 flex h-[42px] w-full items-center gap-3 rounded-xl px-2.5 text-sm font-medium text-white/50 transition-all duration-300 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 group-hover:bg-red-500/10">
-                <LogOutIcon className="h-[18px] w-[18px]" />
-              </span>
-
-              <span>
-                {loggingOut
-                  ? "Logout..."
-                  : "Logout"}
-              </span>
-            </button>
-          </div>
-
-          <div className="mt-3 flex items-center justify-between px-2">
-            <span className="text-[10px] text-white/20">
-              © NusaRasa
-            </span>
-
-            <SettingsIcon className="h-3.5 w-3.5 text-white/15" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       {/* DESKTOP */}
@@ -611,7 +617,14 @@ export default function AdminSidebar() {
               : "-translate-x-[calc(100%-12px)]"
           }`}
         >
-          <SidebarContent />
+          <SidebarContent
+            pathname={pathname}
+            displayName={displayName}
+            avatarUrl={avatarUrl}
+            loggingOut={loggingOut}
+            onNavigate={() => undefined}
+            onLogout={handleLogout}
+          />
 
           {!desktopOpen && (
             <div className="absolute inset-y-0 right-0 flex w-3 items-center justify-center">
@@ -636,6 +649,7 @@ export default function AdminSidebar() {
       <div className="fixed inset-x-0 top-0 z-40 flex h-[68px] items-center justify-between border-b border-gray-200 bg-white/95 px-4 backdrop-blur-xl lg:hidden">
         <Link
           href="/admin"
+          onClick={closeMobileMenu}
           className="flex items-center gap-2.5"
         >
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-black text-xs font-black text-white">
@@ -694,7 +708,14 @@ export default function AdminSidebar() {
           </button>
         </div>
 
-        <SidebarContent />
+        <SidebarContent
+          pathname={pathname}
+          displayName={displayName}
+          avatarUrl={avatarUrl}
+          loggingOut={loggingOut}
+          onNavigate={closeMobileMenu}
+          onLogout={handleLogout}
+        />
       </aside>
 
       {/* MOBILE FLOATING BUTTON */}
