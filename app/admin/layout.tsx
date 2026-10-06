@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+
 import { createClient } from "@/lib/supabase/server";
+import AdminSidebar from "@/components/admin/admin-sidebar";
 
 export default async function AdminLayout({
   children,
@@ -8,8 +10,10 @@ export default async function AdminLayout({
 }) {
   const supabase = await createClient();
 
-  const { data: claimsData, error: claimsError } =
-    await supabase.auth.getClaims();
+  const {
+    data: claimsData,
+    error: claimsError,
+  } = await supabase.auth.getClaims();
 
   if (claimsError || !claimsData?.claims) {
     redirect("/login");
@@ -17,16 +21,30 @@ export default async function AdminLayout({
 
   const userId = claimsData.claims.sub;
 
-  const { data: profile, error: profileError } =
-    await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
+  const {
+    data: profile,
+    error: profileError,
+  } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
 
-  if (profileError || !profile || profile.role !== "admin") {
+  if (
+    profileError ||
+    !profile ||
+    profile.role !== "admin"
+  ) {
     redirect("/account");
   }
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <AdminSidebar />
+
+      <div className="min-h-screen lg:pl-0">
+        {children}
+      </div>
+    </div>
+  );
 }
