@@ -85,30 +85,16 @@ export default async function OrdersPage() {
   ).length;
 
   const completedOrders = orders.filter(
-    (order) =>
-      order.status === "completed"
+    (order) => order.status === "completed"
   ).length;
 
   // =====================================================
   // TOTAL BELANJA
   // =====================================================
-  //
-  // Menghitung seluruh pesanan kecuali
-  // pesanan yang dibatalkan.
-  //
-  // Contoh:
-  // Pesanan 1 = Rp50.000
-  // Pesanan 2 = Rp75.000
-  // Pesanan 3 = Rp25.000 (cancelled)
-  //
-  // Total Belanja = Rp125.000
-  //
-  // =====================================================
 
   const totalSpent = orders
     .filter(
-      (order) =>
-        order.status !== "cancelled"
+      (order) => order.status !== "cancelled"
     )
     .reduce(
       (sum, order) =>
@@ -117,40 +103,44 @@ export default async function OrdersPage() {
     );
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
+    <main className="min-h-screen bg-[#f7f5f0] text-[#171512]">
       {/* =================================================
-          HEADER
+          HERO
       ================================================= */}
 
-      <section className="border-b border-gray-100 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12">
+      <section className="border-b border-[#e4ded5]">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
           <Link
             href="/account"
-            className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 transition hover:text-black"
+            className="group inline-flex items-center gap-2 text-sm font-semibold text-[#817970] transition hover:text-[#171512]"
           >
-            <span>←</span>
+            <span className="transition-transform duration-200 group-hover:-translate-x-1">
+              ←
+            </span>
+
             <span>Kembali ke Akun</span>
           </Link>
 
-          <div className="mt-7">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">
-              NusaRasa
-            </p>
+          <div className="mt-7 max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#ddd6cc] bg-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#91877c]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#a95d2c]" />
+              Order History
+            </div>
 
-            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h1 className="mt-5 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">
               Pesanan Saya
             </h1>
 
-            <p className="mt-3 max-w-2xl text-base leading-7 text-gray-600">
-              Lihat dan pantau semua pesanan yang
-              pernah kamu buat di NusaRasa.
+            <p className="mt-4 max-w-2xl text-base leading-7 text-[#716b63] sm:text-lg">
+              Semua perjalanan pesanan kamu di
+              NusaRasa, dari dibuat hingga selesai.
             </p>
           </div>
         </div>
       </section>
 
       {/* =================================================
-          MAIN CONTENT
+          MAIN
       ================================================= */}
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
@@ -158,88 +148,53 @@ export default async function OrdersPage() {
             STATISTICS
         ================================================= */}
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* TOTAL PESANAN */}
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Total Pesanan"
+            value={String(totalOrders)}
+            description="Semua pesanan"
+            accent="dark"
+          />
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              Total Pesanan
-            </p>
+          <StatCard
+            label="Sedang Diproses"
+            value={String(activeOrders)}
+            description="Pesanan aktif"
+            accent="terracotta"
+          />
 
-            <p className="mt-2 text-3xl font-bold text-gray-900">
-              {totalOrders}
-            </p>
+          <StatCard
+            label="Pesanan Selesai"
+            value={String(completedOrders)}
+            description="Pesanan selesai"
+            accent="soft"
+          />
 
-            <p className="mt-1 text-xs text-gray-400">
-              Semua pesanan
-            </p>
-          </div>
-
-          {/* PESANAN AKTIF */}
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              Sedang Diproses
-            </p>
-
-            <p className="mt-2 text-3xl font-bold text-gray-900">
-              {activeOrders}
-            </p>
-
-            <p className="mt-1 text-xs text-gray-400">
-              Pesanan aktif
-            </p>
-          </div>
-
-          {/* SELESAI */}
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              Selesai
-            </p>
-
-            <p className="mt-2 text-3xl font-bold text-gray-900">
-              {completedOrders}
-            </p>
-
-            <p className="mt-1 text-xs text-gray-400">
-              Pesanan selesai
-            </p>
-          </div>
-
-          {/* TOTAL BELANJA */}
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              Total Belanja
-            </p>
-
-            <p className="mt-2 text-xl font-bold text-gray-900">
-              {formatRupiah(totalSpent)}
-            </p>
-
-            <p className="mt-1 text-xs text-gray-400">
-              Tidak termasuk pesanan batal
-            </p>
-          </div>
-        </div>
+          <StatCard
+            label="Total Belanja"
+            value={formatRupiah(totalSpent)}
+            description="Tidak termasuk pesanan batal"
+            accent="dark"
+            compact
+          />
+        </section>
 
         {/* =================================================
             ORDER LIST
         ================================================= */}
 
-        <section className="mt-10">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <section className="mt-12">
+          <div className="flex flex-col gap-5 border-b border-[#ddd7ce] pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#a19689]">
                 Riwayat
               </p>
 
-              <h2 className="mt-1 text-2xl font-bold text-gray-900">
+              <h2 className="mt-2 text-2xl font-bold tracking-[-0.025em] sm:text-3xl">
                 Semua Pesanan
               </h2>
 
-              <p className="mt-2 text-sm leading-6 text-gray-500">
+              <p className="mt-2 text-sm leading-6 text-[#777067]">
                 Pesanan terbaru ditampilkan terlebih
                 dahulu.
               </p>
@@ -247,9 +202,10 @@ export default async function OrdersPage() {
 
             <Link
               href="/products"
-              className="inline-flex w-fit rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+              className="inline-flex w-fit items-center gap-2 rounded-xl bg-[#171512] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#302d29]"
             >
               Belanja Lagi
+              <span aria-hidden="true">↗</span>
             </Link>
           </div>
 
@@ -258,32 +214,44 @@ export default async function OrdersPage() {
           ================================================= */}
 
           {ordersError ? (
-            <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6">
-              <p className="font-semibold text-red-800">
-                Gagal mengambil pesanan
-              </p>
+            <div className="mt-6 rounded-[2rem] border border-red-200 bg-[#fff8f7] p-6 sm:p-7">
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-100 font-bold text-red-600">
+                  !
+                </div>
 
-              <p className="mt-2 text-sm leading-6 text-red-700">
-                Terjadi masalah saat mengambil
-                riwayat pesanan. Silakan refresh
-                halaman dan coba lagi.
-              </p>
+                <div>
+                  <p className="font-semibold text-red-800">
+                    Gagal mengambil pesanan
+                  </p>
+
+                  <p className="mt-1.5 text-sm leading-6 text-red-700">
+                    Terjadi masalah saat mengambil
+                    riwayat pesanan. Silakan refresh
+                    halaman dan coba lagi.
+                  </p>
+                </div>
+              </div>
             </div>
           ) : orders.length === 0 ? (
             /* =================================================
                EMPTY STATE
             ================================================= */
 
-            <div className="mt-6 rounded-3xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 text-2xl">
+            <div className="mt-6 overflow-hidden rounded-[2rem] border border-dashed border-[#d6cfc5] bg-white px-6 py-16 text-center sm:py-20">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#f2eee8] text-2xl">
                 🛒
               </div>
 
-              <h3 className="mt-5 text-xl font-bold text-gray-900">
+              <p className="mt-6 text-[11px] font-bold uppercase tracking-[0.18em] text-[#a19689]">
+                NusaRasa
+              </p>
+
+              <h3 className="mt-2 text-xl font-bold sm:text-2xl">
                 Belum ada pesanan
               </h3>
 
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
+              <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#777067]">
                 Kamu belum memiliki riwayat pesanan.
                 Temukan produk favoritmu dan mulai
                 belanja di NusaRasa.
@@ -291,7 +259,7 @@ export default async function OrdersPage() {
 
               <Link
                 href="/products"
-                className="mt-6 inline-flex rounded-xl bg-black px-6 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                className="mt-7 inline-flex rounded-xl bg-[#171512] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#302d29]"
               >
                 Mulai Belanja
               </Link>
@@ -302,117 +270,115 @@ export default async function OrdersPage() {
             ================================================= */
 
             <div className="mt-6 space-y-4">
-              {orders.map((order) => (
+              {orders.map((order, index) => (
                 <Link
                   key={order.id}
                   href={`/account/orders/${order.id}`}
-                  className="group block rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md sm:p-6"
+                  className="group relative block overflow-hidden rounded-[2rem] border border-[#e2dcd3] bg-white shadow-[0_8px_30px_rgba(23,21,18,0.035)] transition duration-300 hover:-translate-y-0.5 hover:border-[#cec5ba] hover:shadow-[0_15px_40px_rgba(23,21,18,0.07)]"
                 >
-                  {/* =================================================
-                      TOP
-                  ================================================= */}
+                  {/* LEFT ACCENT */}
 
-                  <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="break-all font-bold text-gray-900">
+                  <div
+                    aria-hidden="true"
+                    className={`absolute left-0 top-0 h-full w-1 ${
+                      order.status === "completed"
+                        ? "bg-[#4c8a5c]"
+                        : order.status ===
+                            "cancelled"
+                          ? "bg-[#c45449]"
+                          : "bg-[#a95d2c]"
+                    }`}
+                  />
+
+                  <div className="p-6 sm:p-7">
+                    {/* =================================================
+                        TOP ROW
+                    ================================================= */}
+
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <span className="rounded-full bg-[#f2eee8] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.13em] text-[#8d8378]">
+                            #{String(index + 1).padStart(2, "0")}
+                          </span>
+
+                          <OrderStatus
+                            status={order.status}
+                          />
+                        </div>
+
+                        <p className="mt-3 break-all text-lg font-bold tracking-[-0.015em] text-[#171512]">
                           {order.order_number}
                         </p>
 
-                        <OrderStatus
-                          status={order.status}
-                        />
+                        <p className="mt-1.5 text-sm text-[#8a8279]">
+                          Dibuat pada{" "}
+                          {formatDate(
+                            order.created_at
+                          )}
+                        </p>
                       </div>
 
-                      <p className="mt-2 text-sm text-gray-500">
-                        Dibuat pada{" "}
-                        {formatDate(
-                          order.created_at
-                        )}
-                      </p>
+                      {/* TOTAL */}
+
+                      <div className="lg:text-right">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-[#aaa197]">
+                          Total Pesanan
+                        </p>
+
+                        <p className="mt-1.5 text-2xl font-bold tracking-[-0.025em] text-[#171512]">
+                          {formatRupiah(
+                            Number(order.total)
+                          )}
+                        </p>
+                      </div>
                     </div>
 
                     {/* =================================================
-                        TOTAL
+                        SUMMARY
                     ================================================= */}
 
-                    <div className="lg:text-right">
-                      <p className="text-xs text-gray-400">
-                        Total Pesanan
-                      </p>
-
-                      <p className="mt-1 text-xl font-bold text-gray-900">
-                        {formatRupiah(
-                          Number(order.total)
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* =================================================
-                      SUMMARY
-                  ================================================= */}
-
-                  <div className="mt-5 grid gap-4 border-t border-gray-100 pt-5 sm:grid-cols-3">
-                    <div>
-                      <p className="text-xs text-gray-400">
-                        Pembayaran
-                      </p>
-
-                      <p className="mt-1 text-sm font-medium text-gray-800">
-                        {formatPaymentMethod(
+                    <div className="mt-6 grid gap-4 border-t border-[#eee9e2] pt-6 sm:grid-cols-3">
+                      <OrderMeta
+                        label="Pembayaran"
+                        value={formatPaymentMethod(
                           order.payment_method
                         )}
-                      </p>
-
-                      <p className="mt-1 text-xs text-gray-500">
-                        {formatPaymentStatus(
+                        secondary={formatPaymentStatus(
                           order.payment_status
                         )}
-                      </p>
-                    </div>
+                      />
 
-                    <div>
-                      <p className="text-xs text-gray-400">
-                        Subtotal
-                      </p>
-
-                      <p className="mt-1 text-sm font-medium text-gray-800">
-                        {formatRupiah(
-                          Number(
-                            order.subtotal
-                          )
+                      <OrderMeta
+                        label="Subtotal"
+                        value={formatRupiah(
+                          Number(order.subtotal)
                         )}
-                      </p>
-                    </div>
+                      />
 
-                    <div>
-                      <p className="text-xs text-gray-400">
-                        Biaya Pengiriman
-                      </p>
-
-                      <p className="mt-1 text-sm font-medium text-gray-800">
-                        {formatRupiah(
+                      <OrderMeta
+                        label="Biaya Pengiriman"
+                        value={formatRupiah(
                           Number(
                             order.delivery_fee
                           )
                         )}
-                      </p>
+                      />
                     </div>
-                  </div>
 
-                  {/* =================================================
-                      DETAIL BUTTON
-                  ================================================= */}
+                    {/* =================================================
+                        DETAIL
+                    ================================================= */}
 
-                  <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
-                    <span className="text-sm font-medium text-gray-500">
-                      Lihat detail pesanan
-                    </span>
+                    <div className="mt-6 flex items-center justify-between border-t border-[#eee9e2] pt-4">
+                      <span className="text-sm font-semibold text-[#817970]">
+                        Lihat detail pesanan
+                      </span>
 
-                    <span className="text-sm font-semibold text-gray-900 transition-transform duration-200 group-hover:translate-x-1">
-                      →
-                    </span>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ded7ce] text-sm text-[#5d574f] transition duration-200 group-hover:translate-x-1 group-hover:border-[#bdb4a9] group-hover:bg-[#f6f3ee]">
+                        →
+                      </span>
+                    </div>
                   </div>
                 </Link>
               ))}
@@ -424,52 +390,41 @@ export default async function OrdersPage() {
             INFORMATION
         ================================================= */}
 
-        <section className="mt-10 rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-          <div className="grid gap-5 md:grid-cols-3">
-            <div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 font-bold">
-                1
-              </div>
+        <section className="mt-10 overflow-hidden rounded-[2rem] bg-[#171512] p-7 text-white sm:p-9">
+          <div className="mb-8">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#a9a198]">
+              Cara Kerja
+            </p>
 
-              <h3 className="mt-4 font-semibold text-gray-900">
-                Pilih Pesanan
-              </h3>
+            <h2 className="mt-2 text-2xl font-bold tracking-[-0.025em]">
+              Pantau pesanan dengan mudah.
+            </h2>
 
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                Pilih salah satu pesanan untuk
-                melihat informasi lengkap.
-              </p>
-            </div>
+            <p className="mt-2 max-w-xl text-sm leading-7 text-[#c5c0ba]">
+              Setiap pesanan memiliki detail dan
+              status yang dapat kamu pantau kapan
+              saja.
+            </p>
+          </div>
 
-            <div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 font-bold">
-                2
-              </div>
+          <div className="grid gap-7 md:grid-cols-3">
+            <InfoStep
+              number="01"
+              title="Pilih Pesanan"
+              description="Pilih salah satu pesanan untuk melihat informasi lengkap."
+            />
 
-              <h3 className="mt-4 font-semibold text-gray-900">
-                Pantau Status
-              </h3>
+            <InfoStep
+              number="02"
+              title="Pantau Status"
+              description="Lihat perkembangan pesanan mulai dari menunggu hingga selesai."
+            />
 
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                Lihat perkembangan pesanan mulai
-                dari menunggu hingga selesai.
-              </p>
-            </div>
-
-            <div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 font-bold">
-                3
-              </div>
-
-              <h3 className="mt-4 font-semibold text-gray-900">
-                Belanja Lagi
-              </h3>
-
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                Setelah selesai, kamu dapat membuat
-                pesanan baru kapan saja.
-              </p>
-            </div>
+            <InfoStep
+              number="03"
+              title="Belanja Lagi"
+              description="Setelah selesai, kamu dapat membuat pesanan baru kapan saja."
+            />
           </div>
         </section>
       </section>
@@ -478,10 +433,10 @@ export default async function OrdersPage() {
           FOOTER
       ================================================= */}
 
-      <footer className="mt-10 border-t border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-8 text-sm text-gray-500 sm:px-6 md:flex-row md:items-center md:justify-between">
+      <footer className="mt-10 border-t border-[#e3ddd4] bg-[#fbfaf8]">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-[#817970] sm:px-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="font-semibold text-gray-900">
+            <p className="font-semibold text-[#171512]">
               NusaRasa
             </p>
 
@@ -493,42 +448,179 @@ export default async function OrdersPage() {
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             <Link
               href="/"
-              className="transition hover:text-black"
+              className="transition hover:text-[#171512]"
             >
               Beranda
             </Link>
 
             <Link
               href="/products"
-              className="transition hover:text-black"
+              className="transition hover:text-[#171512]"
             >
               Produk
             </Link>
 
             <Link
               href="/cart"
-              className="transition hover:text-black"
+              className="transition hover:text-[#171512]"
             >
               Keranjang
             </Link>
 
             <Link
               href="/account"
-              className="transition hover:text-black"
+              className="transition hover:text-[#171512]"
             >
               Akun
             </Link>
           </div>
         </div>
 
-        <div className="border-t border-gray-100">
-          <div className="mx-auto max-w-7xl px-4 py-4 text-xs text-gray-400 sm:px-6">
+        <div className="border-t border-[#eee9e2]">
+          <div className="mx-auto max-w-7xl px-4 py-4 text-xs text-[#aaa197] sm:px-6">
             © {new Date().getFullYear()} NusaRasa.
             All rights reserved.
           </div>
         </div>
       </footer>
     </main>
+  );
+}
+
+// =======================================================
+// STAT CARD
+// =======================================================
+
+function StatCard({
+  label,
+  value,
+  description,
+  accent,
+  compact = false,
+}: {
+  label: string;
+  value: string;
+  description: string;
+  accent: "dark" | "terracotta" | "soft";
+  compact?: boolean;
+}) {
+  const accentStyles = {
+    dark: "bg-[#171512] text-white",
+    terracotta: "bg-[#a95d2c] text-white",
+    soft: "bg-white text-[#171512]",
+  };
+
+  const descriptionStyles = {
+    dark: "text-[#aaa49d]",
+    terracotta: "text-[#f0d6c2]",
+    soft: "text-[#999087]",
+  };
+
+  return (
+    <div
+      className={`relative min-h-[180px] overflow-hidden rounded-[1.75rem] border border-[#e2dcd3] p-6 shadow-[0_8px_30px_rgba(23,21,18,0.035)] ${accentStyles[accent]}`}
+    >
+      <div className="relative z-10">
+        <p
+          className={`text-[11px] font-bold uppercase tracking-[0.15em] ${
+            accent === "soft"
+              ? "text-[#9b9187]"
+              : "text-white/55"
+          }`}
+        >
+          {label}
+        </p>
+
+        <p
+          className={`mt-4 font-bold tracking-[-0.04em] ${
+            compact
+              ? "text-2xl sm:text-3xl"
+              : "text-4xl"
+          }`}
+        >
+          {value}
+        </p>
+
+        <p
+          className={`mt-2 text-xs ${descriptionStyles[accent]}`}
+        >
+          {description}
+        </p>
+      </div>
+
+      <div
+        aria-hidden="true"
+        className={`absolute -bottom-12 -right-12 h-32 w-32 rounded-full border ${
+          accent === "terracotta"
+            ? "border-white/15"
+            : accent === "dark"
+              ? "border-white/10"
+              : "border-[#e5ded5]"
+        }`}
+      />
+    </div>
+  );
+}
+
+// =======================================================
+// ORDER META
+// =======================================================
+
+function OrderMeta({
+  label,
+  value,
+  secondary,
+}: {
+  label: string;
+  value: string;
+  secondary?: string;
+}) {
+  return (
+    <div>
+      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#aaa197]">
+        {label}
+      </p>
+
+      <p className="mt-1.5 text-sm font-semibold text-[#4d4842]">
+        {value}
+      </p>
+
+      {secondary && (
+        <p className="mt-1 text-xs text-[#8a8279]">
+          {secondary}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// =======================================================
+// INFO STEP
+// =======================================================
+
+function InfoStep({
+  number,
+  title,
+  description,
+}: {
+  number: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="border-t border-white/10 pt-5">
+      <span className="text-xs font-bold tracking-[0.15em] text-[#b96532]">
+        {number}
+      </span>
+
+      <h3 className="mt-3 font-semibold text-white">
+        {title}
+      </h3>
+
+      <p className="mt-2 text-sm leading-6 text-[#aaa49d]">
+        {description}
+      </p>
+    </div>
   );
 }
 
@@ -552,29 +644,29 @@ function OrderStatus({
 
   const classes: Record<string, string> = {
     pending:
-      "bg-yellow-100 text-yellow-800",
+      "bg-[#fff4d6] text-[#8a6410]",
 
     confirmed:
-      "bg-blue-100 text-blue-800",
+      "bg-[#e7f0ff] text-[#315d9b]",
 
     preparing:
-      "bg-purple-100 text-purple-800",
+      "bg-[#f0e7fb] text-[#70449b]",
 
     ready:
-      "bg-indigo-100 text-indigo-800",
+      "bg-[#e8e9ff] text-[#5559a3]",
 
     completed:
-      "bg-green-100 text-green-800",
+      "bg-[#e4f4e9] text-[#327347]",
 
     cancelled:
-      "bg-red-100 text-red-800",
+      "bg-[#fde8e6] text-[#a83e35]",
   };
 
   return (
     <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+      className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${
         classes[status] ??
-        "bg-gray-100 text-gray-700"
+        "bg-[#f1eee9] text-[#655e56]"
       }`}
     >
       {labels[status] ?? status}
@@ -587,22 +679,17 @@ function OrderStatus({
 // =======================================================
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat(
-    "id-ID",
-    {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }
-  ).format(new Date(value));
+  return new Intl.DateTimeFormat("id-ID", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
 }
 
 // =======================================================
 // PAYMENT METHOD
 // =======================================================
 
-function formatPaymentMethod(
-  value: string
-) {
+function formatPaymentMethod(value: string) {
   const labels: Record<string, string> = {
     cash: "Cash",
     bank_transfer: "Transfer Bank",
@@ -615,9 +702,7 @@ function formatPaymentMethod(
 // PAYMENT STATUS
 // =======================================================
 
-function formatPaymentStatus(
-  value: string
-) {
+function formatPaymentStatus(value: string) {
   const labels: Record<string, string> = {
     unpaid: "Belum dibayar",
     pending: "Menunggu pembayaran",

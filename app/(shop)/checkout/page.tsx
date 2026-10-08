@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -11,11 +12,8 @@ import {
 } from "@/lib/cart";
 
 import { formatRupiah } from "@/lib/utils";
-import Image from "next/image";
 
-type PaymentMethod =
-  | "cash"
-  | "bank_transfer";
+type PaymentMethod = "cash" | "bank_transfer";
 
 type CreatedOrder = {
   id: string;
@@ -30,36 +28,20 @@ type CreatedOrder = {
 };
 
 export default function CheckoutPage() {
-  const [cart, setCart] =
-  useState<CartItem[]>(() => getCart());
+  const [cart, setCart] = useState<CartItem[]>(() => getCart());
 
-  const [customerName, setCustomerName] =
-    useState("");
-
-  const [customerPhone, setCustomerPhone] =
-    useState("");
-
-  const [deliveryAddress, setDeliveryAddress] =
-    useState("");
-
-  const [notes, setNotes] =
-    useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [notes, setNotes] = useState("");
 
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>("cash");
 
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const [successOrder, setSuccessOrder] =
     useState<CreatedOrder | null>(null);
-
-  // ==================================================
-  // SUBMIT CHECKOUT
-  // ==================================================
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
@@ -68,155 +50,77 @@ export default function CheckoutPage() {
 
     setError("");
 
-    // -----------------------------------------------
-    // VALIDASI CART
-    // -----------------------------------------------
-
     if (cart.length === 0) {
-      setError(
-        "Keranjang masih kosong."
-      );
+      setError("Keranjang masih kosong.");
       return;
     }
 
-    // -----------------------------------------------
-    // VALIDASI NAMA
-    // -----------------------------------------------
-
-    const trimmedName =
-      customerName.trim();
+    const trimmedName = customerName.trim();
 
     if (!trimmedName) {
-      setError(
-        "Nama pelanggan wajib diisi."
-      );
+      setError("Nama pelanggan wajib diisi.");
       return;
     }
 
     if (trimmedName.length < 3) {
-      setError(
-        "Nama pelanggan minimal 3 karakter."
-      );
+      setError("Nama pelanggan minimal 3 karakter.");
       return;
     }
 
-    // -----------------------------------------------
-    // VALIDASI NOMOR TELEPON
-    // -----------------------------------------------
-
-    const trimmedPhone =
-      customerPhone.trim();
+    const trimmedPhone = customerPhone.trim();
 
     if (!trimmedPhone) {
-      setError(
-        "Nomor HP wajib diisi."
-      );
+      setError("Nomor HP wajib diisi.");
       return;
     }
 
     if (trimmedPhone.length < 8) {
-      setError(
-        "Nomor HP tidak valid."
-      );
+      setError("Nomor HP tidak valid.");
       return;
     }
 
-    // -----------------------------------------------
-    // VALIDASI ALAMAT
-    // -----------------------------------------------
-
-    const trimmedAddress =
-      deliveryAddress.trim();
+    const trimmedAddress = deliveryAddress.trim();
 
     if (!trimmedAddress) {
-      setError(
-        "Alamat pengiriman wajib diisi."
-      );
+      setError("Alamat pengiriman wajib diisi.");
       return;
     }
 
     if (trimmedAddress.length < 10) {
-      setError(
-        "Alamat pengiriman terlalu singkat."
-      );
+      setError("Alamat pengiriman terlalu singkat.");
       return;
     }
 
-    // -----------------------------------------------
-    // VALIDASI PAYMENT
-    // -----------------------------------------------
-
     if (
       paymentMethod !== "cash" &&
-      paymentMethod !==
-        "bank_transfer"
+      paymentMethod !== "bank_transfer"
     ) {
-      setError(
-        "Metode pembayaran tidak valid."
-      );
+      setError("Metode pembayaran tidak valid.");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // ---------------------------------------------
-      // PREPARE ITEMS
-      // ---------------------------------------------
+      const items = cart.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      }));
 
-      /*
-       * Jangan kirim harga dari localStorage.
-       *
-       * Server/API akan mengambil harga asli
-       * dari database melalui create_order_atomic.
-       */
-
-      const items = cart.map(
-        (item) => ({
-          productId:
-            item.productId,
-          quantity:
-            item.quantity,
-        })
-      );
-
-      // ---------------------------------------------
-      // SEND REQUEST
-      // ---------------------------------------------
-
-      const response = await fetch(
-        "/api/orders",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify({
-            items,
-
-            customerName:
-              trimmedName,
-
-            customerPhone:
-              trimmedPhone,
-
-            deliveryAddress:
-              trimmedAddress,
-
-            notes:
-              notes.trim(),
-
-            paymentMethod,
-          }),
-        }
-      );
-
-      // ---------------------------------------------
-      // PARSE RESPONSE
-      // ---------------------------------------------
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items,
+          customerName: trimmedName,
+          customerPhone: trimmedPhone,
+          deliveryAddress: trimmedAddress,
+          notes: notes.trim(),
+          paymentMethod,
+        }),
+      });
 
       let result: {
         success?: boolean;
@@ -235,28 +139,16 @@ export default function CheckoutPage() {
       };
 
       try {
-        result =
-          await response.json();
+        result = await response.json();
       } catch {
-        throw new Error(
-          "Response server tidak valid."
-        );
+        throw new Error("Response server tidak valid.");
       }
-
-      // ---------------------------------------------
-      // API ERROR
-      // ---------------------------------------------
 
       if (!response.ok) {
         throw new Error(
-          result?.error ||
-            "Gagal membuat pesanan."
+          result?.error || "Gagal membuat pesanan."
         );
       }
-
-      // ---------------------------------------------
-      // VALIDASI RESPONSE
-      // ---------------------------------------------
 
       if (!result?.order) {
         throw new Error(
@@ -265,72 +157,27 @@ export default function CheckoutPage() {
       }
 
       if (!result.order.id) {
-        throw new Error(
-          "ID pesanan tidak ditemukan."
-        );
+        throw new Error("ID pesanan tidak ditemukan.");
       }
 
-      // ---------------------------------------------
-      // BUILD ORDER DATA
-      // ---------------------------------------------
-
-      const createdOrder: CreatedOrder =
-        {
-          id: result.order.id,
-
-          orderNumber:
-            result.order.orderNumber ??
-            "Pesanan",
-
-          subtotal:
-            result.order.subtotal,
-
-          discount:
-            result.order.discount,
-
-          deliveryFee:
-            result.order.deliveryFee,
-
-          total:
-            result.order.total,
-
-          status:
-            result.order.status,
-
-          paymentMethod:
-            result.order
-              .paymentMethod,
-
-          paymentStatus:
-            result.order
-              .paymentStatus,
-        };
-
-      // ---------------------------------------------
-      // CLEAR CART
-      // ---------------------------------------------
-
-      /*
-       * Cart baru boleh dikosongkan setelah
-       * server mengembalikan response sukses.
-       */
+      const createdOrder: CreatedOrder = {
+        id: result.order.id,
+        orderNumber:
+          result.order.orderNumber ?? "Pesanan",
+        subtotal: result.order.subtotal,
+        discount: result.order.discount,
+        deliveryFee: result.order.deliveryFee,
+        total: result.order.total,
+        status: result.order.status,
+        paymentMethod: result.order.paymentMethod,
+        paymentStatus: result.order.paymentStatus,
+      };
 
       clearCart();
-
       setCart([]);
-
-      // ---------------------------------------------
-      // SHOW SUCCESS
-      // ---------------------------------------------
-
-      setSuccessOrder(
-        createdOrder
-      );
+      setSuccessOrder(createdOrder);
     } catch (err) {
-      console.error(
-        "CHECKOUT ERROR:",
-        err
-      );
+      console.error("CHECKOUT ERROR:", err);
 
       setError(
         err instanceof Error
@@ -342,131 +189,126 @@ export default function CheckoutPage() {
     }
   }
 
-  // ==================================================
-  // SUCCESS
-  // ==================================================
-
   if (successOrder) {
     return (
-      <main className="min-h-screen bg-gray-50 text-gray-900">
-        <section className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm sm:p-10">
-            {/* SUCCESS ICON */}
+      <main className="min-h-screen bg-[#f7f5f0] text-[#171512]">
+        <section className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
+          <div className="overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-[0_20px_70px_rgba(23,21,18,0.08)]">
+            {/* TOP ACCENT */}
 
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl font-bold text-green-700">
-              ✓
-            </div>
+            <div className="h-1.5 bg-[#9b5425]" />
 
-            {/* TITLE */}
+            <div className="p-6 sm:p-10 lg:p-12">
+              <div className="flex flex-col items-center text-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#f1e5d8] text-3xl text-[#9b5425]">
+                  ✓
+                </div>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">
-                NusaRasa
-              </p>
-
-              <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                Pesanan Berhasil!
-              </h1>
-
-              <p className="mx-auto mt-4 max-w-lg text-sm leading-6 text-gray-600 sm:text-base">
-                Pesanan kamu sudah berhasil
-                dibuat dan sedang menunggu
-                diproses oleh NusaRasa.
-              </p>
-            </div>
-
-            {/* ORDER NUMBER */}
-
-            <div className="mt-8 rounded-2xl bg-gray-50 p-5 text-center">
-              <p className="text-sm text-gray-500">
-                Nomor Pesanan
-              </p>
-
-              <p className="mt-2 break-all text-xl font-bold tracking-wide text-gray-900">
-                {successOrder.orderNumber}
-              </p>
-            </div>
-
-            {/* ORDER INFO */}
-
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-gray-200 p-5">
-                <p className="text-sm text-gray-500">
-                  Total Pesanan
+                <p className="mt-7 text-[11px] font-bold uppercase tracking-[0.25em] text-[#9b5425]">
+                  NusaRasa
                 </p>
 
-                <p className="mt-2 text-xl font-bold text-gray-900">
-                  {successOrder.total !==
-                  undefined
-                    ? formatRupiah(
-                        Number(
-                          successOrder.total
+                <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
+                  Pesanan berhasil dibuat.
+                </h1>
+
+                <p className="mt-4 max-w-xl text-sm leading-7 text-black/55 sm:text-base">
+                  Terima kasih sudah memilih NusaRasa.
+                  Pesanan kamu sudah masuk dan akan
+                  diproses oleh tim kami.
+                </p>
+              </div>
+
+              {/* ORDER NUMBER */}
+
+              <div className="mt-9 rounded-2xl bg-[#f7f5f0] p-6 text-center">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-black/40">
+                  Nomor Pesanan
+                </p>
+
+                <p className="mt-3 break-all text-xl font-semibold tracking-wide text-[#171512] sm:text-2xl">
+                  {successOrder.orderNumber}
+                </p>
+              </div>
+
+              {/* SUMMARY */}
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-black/10 p-5">
+                  <p className="text-xs text-black/45">
+                    Total Pesanan
+                  </p>
+
+                  <p className="mt-2 text-xl font-semibold">
+                    {successOrder.total !== undefined
+                      ? formatRupiah(
+                          Number(successOrder.total)
                         )
-                      )
-                    : "—"}
-                </p>
+                      : "—"}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-black/10 p-5">
+                  <p className="text-xs text-black/45">
+                    Pembayaran
+                  </p>
+
+                  <p className="mt-2 font-semibold">
+                    {formatPaymentMethod(
+                      successOrder.paymentMethod
+                    )}
+                  </p>
+
+                  <p className="mt-1 text-xs text-black/45">
+                    {formatPaymentStatus(
+                      successOrder.paymentStatus
+                    )}
+                  </p>
+                </div>
               </div>
 
-              <div className="rounded-2xl border border-gray-200 p-5">
-                <p className="text-sm text-gray-500">
-                  Pembayaran
-                </p>
+              {/* STATUS */}
 
-                <p className="mt-2 font-semibold text-gray-900">
-                  {formatPaymentMethod(
-                    successOrder.paymentMethod
-                  )}
-                </p>
+              {successOrder.status && (
+                <div className="mt-4 rounded-2xl border border-[#e8d5c2] bg-[#fbf4ed] p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#9b5425]">
+                    Status Pesanan
+                  </p>
 
-                <p className="mt-1 text-sm text-gray-500">
-                  {formatPaymentStatus(
-                    successOrder.paymentStatus
-                  )}
-                </p>
+                  <p className="mt-2 text-sm font-medium text-[#70401f]">
+                    {formatOrderStatus(
+                      successOrder.status
+                    )}
+                  </p>
+                </div>
+              )}
+
+              {/* ACTIONS */}
+
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                <Link
+                  href={`/account/orders/${successOrder.id}`}
+                  className="flex items-center justify-center rounded-xl bg-[#171512] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#2b2824]"
+                >
+                  Lihat Detail Pesanan
+                </Link>
+
+                <Link
+                  href="/products"
+                  className="flex items-center justify-center rounded-xl border border-black/10 px-5 py-3.5 text-sm font-semibold text-[#171512] transition hover:bg-[#f7f5f0]"
+                >
+                  Belanja Lagi
+                </Link>
               </div>
-            </div>
 
-            {/* STATUS */}
-
-            {successOrder.status && (
-              <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-5">
-                <p className="text-sm font-medium text-blue-900">
-                  Status Pesanan
-                </p>
-
-                <p className="mt-1 text-sm text-blue-700">
-                  {formatOrderStatus(
-                    successOrder.status
-                  )}
-                </p>
+              <div className="mt-5 text-center">
+                <Link
+                  href="/account"
+                  className="text-sm font-medium text-black/45 transition hover:text-[#171512]"
+                >
+                  Lihat Semua Pesanan
+                </Link>
               </div>
-            )}
-
-            {/* ACTIONS */}
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <Link
-                href={`/account/orders/${successOrder.id}`}
-                className="flex items-center justify-center rounded-xl bg-black px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-gray-800"
-              >
-                Lihat Detail Pesanan
-              </Link>
-
-              <Link
-                href="/products"
-                className="flex items-center justify-center rounded-xl border border-gray-200 px-5 py-3.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-              >
-                Belanja Lagi
-              </Link>
-            </div>
-
-            <div className="mt-5 text-center">
-              <Link
-                href="/account"
-                className="text-sm font-medium text-gray-500 transition hover:text-black"
-              >
-                Lihat Semua Pesanan
-              </Link>
             </div>
           </div>
         </section>
@@ -474,35 +316,31 @@ export default function CheckoutPage() {
     );
   }
 
-  // ==================================================
-  // EMPTY CART
-  // ==================================================
-
   if (cart.length === 0) {
     return (
-      <main className="min-h-screen bg-gray-50 text-gray-900">
-        <section className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16">
-          <div className="rounded-3xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-10">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 text-2xl">
+      <main className="min-h-screen bg-[#f7f5f0] text-[#171512]">
+        <section className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-20">
+          <div className="rounded-[2rem] border border-black/10 bg-white p-8 text-center shadow-[0_20px_60px_rgba(23,21,18,0.06)] sm:p-12">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-[#f1e5d8] text-3xl">
               🛒
             </div>
 
-            <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">
-              NusaRasa
+            <p className="mt-7 text-[11px] font-bold uppercase tracking-[0.25em] text-[#9b5425]">
+              Checkout
             </p>
 
-            <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-              Keranjang kosong
+            <h1 className="mt-3 text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
+              Keranjang masih kosong.
             </h1>
 
-            <p className="mt-3 text-sm leading-6 text-gray-500">
-              Tambahkan produk terlebih dahulu
-              sebelum melakukan checkout.
+            <p className="mx-auto mt-4 max-w-md text-sm leading-7 text-black/50">
+              Tambahkan produk pilihanmu terlebih
+              dahulu sebelum melanjutkan ke checkout.
             </p>
 
             <Link
               href="/products"
-              className="mt-7 inline-flex rounded-xl bg-black px-6 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+              className="mt-8 inline-flex rounded-xl bg-[#171512] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[#2b2824]"
             >
               Lihat Produk
             </Link>
@@ -512,87 +350,107 @@ export default function CheckoutPage() {
     );
   }
 
-  // ==================================================
-  // CART TOTAL
-  // ==================================================
+  const total = getCartTotal(cart);
 
-  const total =
-    getCartTotal(cart);
-
-  const totalItems =
-    cart.reduce(
-      (sum, item) =>
-        sum + item.quantity,
-      0
-    );
-
-  // ==================================================
-  // CHECKOUT PAGE
-  // ==================================================
+  const totalItems = cart.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      {/* ==================================================
-          HEADER
-      ================================================== */}
+    <main className="min-h-screen bg-[#f7f5f0] text-[#171512]">
+      {/* HERO */}
 
-      <section className="border-b border-gray-100 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">
-            NusaRasa
-          </p>
+      <section className="border-b border-black/5">
+        <div className="mx-auto max-w-7xl px-4 pb-8 pt-10 sm:px-6 sm:pb-10 sm:pt-14">
+          <div className="max-w-2xl">
+            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#9b5425]">
+              NusaRasa · Checkout
+            </p>
 
-          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            Checkout
-          </h1>
+            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl lg:text-5xl">
+              Selesaikan pesananmu.
+            </h1>
 
-          <p className="mt-3 max-w-2xl text-base leading-7 text-gray-600">
-            Lengkapi informasi pengiriman dan
-            pilih metode pembayaran untuk
-            menyelesaikan pesanan.
-          </p>
+            <p className="mt-4 text-sm leading-7 text-black/55 sm:text-base">
+              Lengkapi informasi pengiriman dan pilih
+              metode pembayaran untuk menyelesaikan
+              pesanan.
+            </p>
+          </div>
+
+          {/* STEP INDICATOR */}
+
+          <div className="mt-8 flex items-center gap-3 text-xs font-medium">
+            <div className="flex items-center gap-2 text-[#9b5425]">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#9b5425] text-white">
+                1
+              </span>
+              <span className="hidden sm:inline">
+                Informasi
+              </span>
+            </div>
+
+            <div className="h-px w-8 bg-black/10 sm:w-14" />
+
+            <div className="flex items-center gap-2 text-black/35">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-black/10 bg-white">
+                2
+              </span>
+              <span className="hidden sm:inline">
+                Pembayaran
+              </span>
+            </div>
+
+            <div className="h-px w-8 bg-black/10 sm:w-14" />
+
+            <div className="flex items-center gap-2 text-black/35">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-black/10 bg-white">
+                3
+              </span>
+              <span className="hidden sm:inline">
+                Selesai
+              </span>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ==================================================
-          CONTENT
-      ================================================== */}
+      {/* CONTENT */}
 
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
         <form
           onSubmit={handleSubmit}
-          className="grid gap-8 lg:grid-cols-[1fr_380px]"
+          className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_390px]"
         >
-          {/* ==================================================
-              LEFT COLUMN
-          ================================================== */}
+          {/* LEFT */}
 
           <div className="space-y-6">
-            {/* CUSTOMER INFORMATION */}
+            {/* CUSTOMER */}
 
-            <section className="rounded-2xl border border-gray-200 bg-white p-6">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-400">
+            <section className="rounded-[1.75rem] border border-black/10 bg-white p-6 shadow-[0_12px_40px_rgba(23,21,18,0.04)] sm:p-8">
+              <div className="flex gap-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f1e5d8] text-sm font-bold text-[#9b5425]">
                   01
-                </p>
+                </div>
 
-                <h2 className="mt-1 text-xl font-bold text-gray-900">
-                  Informasi Pelanggan
-                </h2>
+                <div>
+                  <h2 className="text-xl font-semibold tracking-tight">
+                    Informasi Pelanggan
+                  </h2>
 
-                <p className="mt-2 text-sm text-gray-500">
-                  Data ini digunakan untuk
-                  proses pengiriman pesanan.
-                </p>
+                  <p className="mt-1.5 text-sm leading-6 text-black/45">
+                    Data ini digunakan untuk proses
+                    pengiriman pesanan.
+                  </p>
+                </div>
               </div>
 
-              <div className="mt-6 space-y-5">
-                {/* NAME */}
-
+              <div className="mt-8 space-y-5">
                 <div>
                   <label
                     htmlFor="customerName"
-                    className="text-sm font-medium text-gray-700"
+                    className="text-sm font-semibold"
                   >
                     Nama Lengkap
                   </label>
@@ -603,24 +461,20 @@ export default function CheckoutPage() {
                     type="text"
                     value={customerName}
                     onChange={(event) =>
-                      setCustomerName(
-                        event.target.value
-                      )
+                      setCustomerName(event.target.value)
                     }
                     placeholder="Masukkan nama lengkap"
                     autoComplete="name"
                     disabled={isSubmitting}
-                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:bg-gray-50"
+                    className="mt-2.5 w-full rounded-xl border border-black/10 bg-[#fcfbf8] px-4 py-3.5 text-sm outline-none transition placeholder:text-black/30 focus:border-[#9b5425] focus:bg-white focus:ring-4 focus:ring-[#9b5425]/10 disabled:cursor-not-allowed disabled:opacity-60"
                     required
                   />
                 </div>
 
-                {/* PHONE */}
-
                 <div>
                   <label
                     htmlFor="customerPhone"
-                    className="text-sm font-medium text-gray-700"
+                    className="text-sm font-semibold"
                   >
                     Nomor HP
                   </label>
@@ -631,25 +485,21 @@ export default function CheckoutPage() {
                     type="tel"
                     value={customerPhone}
                     onChange={(event) =>
-                      setCustomerPhone(
-                        event.target.value
-                      )
+                      setCustomerPhone(event.target.value)
                     }
                     placeholder="08xxxxxxxxxx"
                     autoComplete="tel"
                     inputMode="tel"
                     disabled={isSubmitting}
-                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:bg-gray-50"
+                    className="mt-2.5 w-full rounded-xl border border-black/10 bg-[#fcfbf8] px-4 py-3.5 text-sm outline-none transition placeholder:text-black/30 focus:border-[#9b5425] focus:bg-white focus:ring-4 focus:ring-[#9b5425]/10 disabled:cursor-not-allowed disabled:opacity-60"
                     required
                   />
                 </div>
 
-                {/* ADDRESS */}
-
                 <div>
                   <label
                     htmlFor="deliveryAddress"
-                    className="text-sm font-medium text-gray-700"
+                    className="text-sm font-semibold"
                   >
                     Alamat Pengiriman
                   </label>
@@ -659,35 +509,30 @@ export default function CheckoutPage() {
                     name="deliveryAddress"
                     value={deliveryAddress}
                     onChange={(event) =>
-                      setDeliveryAddress(
-                        event.target.value
-                      )
+                      setDeliveryAddress(event.target.value)
                     }
                     placeholder="Masukkan alamat lengkap pengiriman"
                     autoComplete="street-address"
                     rows={5}
                     disabled={isSubmitting}
-                    className="mt-2 w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:bg-gray-50"
+                    className="mt-2.5 w-full resize-none rounded-xl border border-black/10 bg-[#fcfbf8] px-4 py-3.5 text-sm leading-6 outline-none transition placeholder:text-black/30 focus:border-[#9b5425] focus:bg-white focus:ring-4 focus:ring-[#9b5425]/10 disabled:cursor-not-allowed disabled:opacity-60"
                     required
                   />
 
-                  <p className="mt-2 text-xs text-gray-400">
-                    Sertakan nama jalan, nomor
-                    rumah, RT/RW, kelurahan,
-                    kecamatan, dan informasi
-                    lainnya jika diperlukan.
+                  <p className="mt-2 text-xs leading-5 text-black/35">
+                    Sertakan nama jalan, nomor rumah,
+                    RT/RW, kelurahan, kecamatan, dan
+                    informasi lainnya jika diperlukan.
                   </p>
                 </div>
-
-                {/* NOTES */}
 
                 <div>
                   <label
                     htmlFor="notes"
-                    className="text-sm font-medium text-gray-700"
+                    className="text-sm font-semibold"
                   >
-                    Catatan
-                    <span className="ml-1 font-normal text-gray-400">
+                    Catatan{" "}
+                    <span className="font-normal text-black/35">
                       (opsional)
                     </span>
                   </label>
@@ -697,14 +542,12 @@ export default function CheckoutPage() {
                     name="notes"
                     value={notes}
                     onChange={(event) =>
-                      setNotes(
-                        event.target.value
-                      )
+                      setNotes(event.target.value)
                     }
                     placeholder="Contoh: Kirim sore hari."
                     rows={3}
                     disabled={isSubmitting}
-                    className="mt-2 w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:bg-gray-50"
+                    className="mt-2.5 w-full resize-none rounded-xl border border-black/10 bg-[#fcfbf8] px-4 py-3.5 text-sm leading-6 outline-none transition placeholder:text-black/30 focus:border-[#9b5425] focus:bg-white focus:ring-4 focus:ring-[#9b5425]/10 disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
               </div>
@@ -712,70 +555,60 @@ export default function CheckoutPage() {
 
             {/* PAYMENT */}
 
-            <section className="rounded-2xl border border-gray-200 bg-white p-6">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-400">
+            <section className="rounded-[1.75rem] border border-black/10 bg-white p-6 shadow-[0_12px_40px_rgba(23,21,18,0.04)] sm:p-8">
+              <div className="flex gap-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f1e5d8] text-sm font-bold text-[#9b5425]">
                   02
-                </p>
+                </div>
 
-                <h2 className="mt-1 text-xl font-bold text-gray-900">
-                  Metode Pembayaran
-                </h2>
+                <div>
+                  <h2 className="text-xl font-semibold tracking-tight">
+                    Metode Pembayaran
+                  </h2>
 
-                <p className="mt-2 text-sm text-gray-500">
-                  Pilih metode pembayaran yang
-                  tersedia.
-                </p>
+                  <p className="mt-1.5 text-sm leading-6 text-black/45">
+                    Pilih metode pembayaran yang tersedia.
+                  </p>
+                </div>
               </div>
 
-              <div className="mt-6 space-y-3">
-                {/* CASH */}
-
+              <div className="mt-8 space-y-3">
                 <label
-                  className={`flex cursor-pointer gap-4 rounded-xl border p-4 transition ${
-                    paymentMethod ===
-                    "cash"
-                      ? "border-black bg-gray-50"
-                      : "border-gray-200 hover:bg-gray-50"
+                  className={`flex cursor-pointer gap-4 rounded-2xl border p-5 transition ${
+                    paymentMethod === "cash"
+                      ? "border-[#9b5425] bg-[#fbf4ed] shadow-sm"
+                      : "border-black/10 bg-white hover:bg-[#fcfbf8]"
                   }`}
                 >
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="cash"
-                    checked={
-                      paymentMethod ===
-                      "cash"
-                    }
+                    checked={paymentMethod === "cash"}
                     onChange={() =>
-                      setPaymentMethod(
-                        "cash"
-                      )
+                      setPaymentMethod("cash")
                     }
                     disabled={isSubmitting}
-                    className="mt-1 h-4 w-4"
+                    className="mt-1 h-4 w-4 accent-[#9b5425]"
                   />
 
                   <div>
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold">
                       Cash
                     </p>
 
-                    <p className="mt-1 text-sm leading-5 text-gray-500">
-                      Bayar secara tunai sesuai
-                      instruksi dari penjual.
+                    <p className="mt-1 text-sm leading-6 text-black/45">
+                      Bayar secara tunai sesuai instruksi
+                      dari penjual.
                     </p>
                   </div>
                 </label>
 
-                {/* BANK TRANSFER */}
-
                 <label
-                  className={`flex cursor-pointer gap-4 rounded-xl border p-4 transition ${
-                    paymentMethod ===
-                    "bank_transfer"
-                      ? "border-black bg-gray-50"
-                      : "border-gray-200 hover:bg-gray-50"
+                  className={`flex cursor-pointer gap-4 rounded-2xl border p-5 transition ${
+                    paymentMethod === "bank_transfer"
+                      ? "border-[#9b5425] bg-[#fbf4ed] shadow-sm"
+                      : "border-black/10 bg-white hover:bg-[#fcfbf8]"
                   }`}
                 >
                   <input
@@ -783,24 +616,21 @@ export default function CheckoutPage() {
                     name="paymentMethod"
                     value="bank_transfer"
                     checked={
-                      paymentMethod ===
-                      "bank_transfer"
+                      paymentMethod === "bank_transfer"
                     }
                     onChange={() =>
-                      setPaymentMethod(
-                        "bank_transfer"
-                      )
+                      setPaymentMethod("bank_transfer")
                     }
                     disabled={isSubmitting}
-                    className="mt-1 h-4 w-4"
+                    className="mt-1 h-4 w-4 accent-[#9b5425]"
                   />
 
                   <div>
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold">
                       Transfer Bank
                     </p>
 
-                    <p className="mt-1 text-sm leading-5 text-gray-500">
+                    <p className="mt-1 text-sm leading-6 text-black/45">
                       Pembayaran dilakukan melalui
                       transfer bank.
                     </p>
@@ -814,65 +644,58 @@ export default function CheckoutPage() {
             {error && (
               <div
                 role="alert"
-                className="rounded-xl border border-red-200 bg-red-50 p-4"
+                className="rounded-2xl border border-red-200 bg-red-50 p-5"
               >
                 <p className="text-sm font-semibold text-red-800">
                   Gagal membuat pesanan
                 </p>
 
-                <p className="mt-1 text-sm leading-6 text-red-700">
+                <p className="mt-1.5 text-sm leading-6 text-red-700">
                   {error}
                 </p>
               </div>
             )}
 
-            {/* SECURITY INFO */}
+            {/* SECURITY */}
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-5">
+            <div className="rounded-2xl border border-black/10 bg-white p-5">
               <div className="flex gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f1e5d8] text-sm text-[#9b5425]">
                   ✓
                 </div>
 
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold">
                     Pesanan aman
                   </p>
 
-                  <p className="mt-1 text-xs leading-5 text-gray-500">
-                    Harga produk akan diverifikasi
-                    kembali oleh server saat
-                    pesanan dibuat.
+                  <p className="mt-1 text-xs leading-5 text-black/40">
+                    Harga produk akan diverifikasi kembali
+                    oleh server saat pesanan dibuat.
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ==================================================
-              RIGHT COLUMN
-          ================================================== */}
+          {/* RIGHT */}
 
-          <aside className="h-fit rounded-2xl border border-gray-200 bg-white p-6 lg:sticky lg:top-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-400">
-              Pesanan
+          <aside className="h-fit rounded-[1.75rem] bg-[#171512] p-6 text-white shadow-[0_20px_60px_rgba(23,21,18,0.16)] sm:p-7 lg:sticky lg:top-6">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#d99561]">
+              Pesananmu
             </p>
 
-            <h2 className="mt-1 text-xl font-bold text-gray-900">
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
               Ringkasan Pesanan
             </h2>
 
-            {/* ITEMS */}
-
-            <div className="mt-6 space-y-4">
+            <div className="mt-7 space-y-4">
               {cart.map((item) => (
                 <div
                   key={item.productId}
                   className="flex gap-3"
                 >
-                  {/* IMAGE */}
-
-                  <div className="relative aspect-square overflow-hidden bg-gray-100">
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-white/10">
                     {item.imageUrl ? (
                       <Image
                         src={item.imageUrl}
@@ -882,111 +705,102 @@ export default function CheckoutPage() {
                         className="object-cover"
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-[10px] text-gray-400">
+                      <div className="flex h-full items-center justify-center text-[9px] text-white/30">
                         No Image
                       </div>
                     )}
                   </div>
 
-                  {/* INFO */}
-
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-sm font-medium text-gray-900">
+                    <p className="line-clamp-2 text-sm font-medium text-white/90">
                       {item.name}
                     </p>
 
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-white/40">
                       {item.quantity} ×{" "}
-                      {formatRupiah(
-                        item.price
-                      )}
+                      {formatRupiah(item.price)}
                     </p>
                   </div>
 
-                  {/* SUBTOTAL */}
-
-                  <p className="shrink-0 text-sm font-semibold text-gray-900">
+                  <p className="shrink-0 text-sm font-semibold text-white">
                     {formatRupiah(
-                      item.price *
-                        item.quantity
+                      item.price * item.quantity
                     )}
                   </p>
                 </div>
               ))}
             </div>
 
-            {/* SUMMARY */}
+            <div className="my-6 h-px bg-white/10" />
 
-            <div className="mt-6 space-y-3 border-t border-gray-100 pt-6">
+            <div className="space-y-4">
               <div className="flex justify-between gap-4 text-sm">
-                <span className="text-gray-500">
+                <span className="text-white/45">
                   Jumlah item
                 </span>
 
-                <span className="font-medium text-gray-900">
+                <span className="font-medium">
                   {totalItems}
                 </span>
               </div>
 
               <div className="flex justify-between gap-4 text-sm">
-                <span className="text-gray-500">
+                <span className="text-white/45">
                   Subtotal
                 </span>
 
-                <span className="font-medium text-gray-900">
+                <span className="font-medium">
                   {formatRupiah(total)}
                 </span>
               </div>
 
               <div className="flex justify-between gap-4 text-sm">
-                <span className="text-gray-500">
+                <span className="text-white/45">
                   Diskon
                 </span>
 
-                <span className="font-medium text-gray-900">
+                <span className="font-medium">
                   Rp0
                 </span>
               </div>
 
               <div className="flex justify-between gap-4 text-sm">
-                <span className="text-gray-500">
-                  Biaya Pengiriman
+                <span className="text-white/45">
+                  Pengiriman
                 </span>
 
-                <span className="font-medium text-gray-500">
+                <span className="font-medium text-white/60">
                   Rp0
                 </span>
               </div>
-
-              <div className="border-t border-gray-100 pt-4">
-                <div className="flex items-end justify-between gap-4">
-                  <div>
-                    <p className="font-semibold text-gray-900">
-                      Total
-                    </p>
-
-                    <p className="mt-1 text-xs text-gray-400">
-                      Total sementara
-                    </p>
-                  </div>
-
-                  <p className="text-xl font-bold text-black">
-                    {formatRupiah(total)}
-                  </p>
-                </div>
-              </div>
             </div>
 
-            {/* SUBMIT */}
+            <div className="my-6 h-px bg-white/10" />
+
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold">
+                  Total
+                </p>
+
+                <p className="mt-1 text-[11px] text-white/35">
+                  Total sementara
+                </p>
+              </div>
+
+              <p className="text-2xl font-semibold tracking-tight text-[#d99561]">
+                {formatRupiah(total)}
+              </p>
+            </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="mt-6 flex w-full items-center justify-center rounded-xl bg-black px-6 py-4 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-7 flex w-full items-center justify-center rounded-xl bg-white px-6 py-4 text-sm font-bold text-[#171512] transition hover:bg-[#f1e5d8] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
-                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-[#171512] border-t-transparent" />
                   Memproses Pesanan...
                 </>
               ) : (
@@ -994,20 +808,15 @@ export default function CheckoutPage() {
               )}
             </button>
 
-            {/* BACK */}
-
             <Link
               href="/cart"
-              className="mt-3 flex w-full items-center justify-center rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+              className="mt-3 flex w-full items-center justify-center rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-white/70 transition hover:border-white/20 hover:bg-white/5 hover:text-white"
             >
               ← Kembali ke Keranjang
             </Link>
 
-            {/* PRODUCT COUNT */}
-
-            <p className="mt-4 text-center text-xs leading-5 text-gray-400">
-              {cart.length} jenis produk ·{" "}
-              {totalItems} item
+            <p className="mt-5 text-center text-[11px] leading-5 text-white/30">
+              {cart.length} jenis produk · {totalItems} item
             </p>
           </aside>
         </form>
@@ -1016,21 +825,12 @@ export default function CheckoutPage() {
   );
 }
 
-// ==================================================
-// FORMAT ORDER STATUS
-// ==================================================
-
-function formatOrderStatus(
-  value?: string
-) {
+function formatOrderStatus(value?: string) {
   if (!value) {
     return "Menunggu";
   }
 
-  const labels: Record<
-    string,
-    string
-  > = {
+  const labels: Record<string, string> = {
     pending: "Menunggu diproses",
     confirmed: "Pesanan dikonfirmasi",
     preparing: "Pesanan sedang diproses",
@@ -1039,26 +839,15 @@ function formatOrderStatus(
     cancelled: "Pesanan dibatalkan",
   };
 
-  return (
-    labels[value] ?? value
-  );
+  return labels[value] ?? value;
 }
 
-// ==================================================
-// FORMAT PAYMENT METHOD
-// ==================================================
-
-function formatPaymentMethod(
-  value?: string
-) {
+function formatPaymentMethod(value?: string) {
   if (!value) {
     return "—";
   }
 
-  const labels: Record<
-    string,
-    string
-  > = {
+  const labels: Record<string, string> = {
     cash: "Cash",
     bank_transfer: "Transfer Bank",
   };
@@ -1066,21 +855,12 @@ function formatPaymentMethod(
   return labels[value] ?? value;
 }
 
-// ==================================================
-// FORMAT PAYMENT STATUS
-// ==================================================
-
-function formatPaymentStatus(
-  value?: string
-) {
+function formatPaymentStatus(value?: string) {
   if (!value) {
     return "Menunggu";
   }
 
-  const labels: Record<
-    string,
-    string
-  > = {
+  const labels: Record<string, string> = {
     unpaid: "Belum dibayar",
     pending: "Menunggu pembayaran",
     paid: "Sudah dibayar",

@@ -23,12 +23,18 @@ type Product = {
   is_available: boolean;
   created_at: string;
 
-  // Supabase mengembalikan relasi categories sebagai array.
-  categories: {
-    id: string;
-    name: string;
-    slug: string;
-  }[] | null;
+  categories:
+    | {
+        id: string;
+        name: string;
+        slug: string;
+      }
+    | {
+        id: string;
+        name: string;
+        slug: string;
+      }[]
+    | null;
 };
 
 type ProductManagerProps = {
@@ -50,7 +56,8 @@ function getStoragePath(imageUrl: string | null) {
     return null;
   }
 
-  const marker = "/storage/v1/object/public/product-images/";
+  const marker =
+    "/storage/v1/object/public/product-images/";
 
   const index = imageUrl.indexOf(marker);
 
@@ -58,7 +65,19 @@ function getStoragePath(imageUrl: string | null) {
     return null;
   }
 
-  return imageUrl.substring(index + marker.length);
+  return imageUrl.substring(
+    index + marker.length
+  );
+}
+
+function getCategoryName(
+  categories: Product["categories"]
+) {
+  if (Array.isArray(categories)) {
+    return categories[0]?.name ?? "TANPA KATEGORI";
+  }
+
+  return categories?.name ?? "TANPA KATEGORI";
 }
 
 export default function ProductManager({
@@ -171,7 +190,9 @@ export default function ProductManager({
     setError(null);
     setSelectedFile(file);
 
-    const objectUrl = URL.createObjectURL(file);
+    const objectUrl =
+      URL.createObjectURL(file);
+
     setPreviewUrl(objectUrl);
   }
 
@@ -180,7 +201,10 @@ export default function ProductManager({
     productId: string
   ) {
     const extension =
-      file.name.split(".").pop()?.toLowerCase() || "jpg";
+      file.name
+        .split(".")
+        .pop()
+        ?.toLowerCase() || "jpg";
 
     const fileName =
       `${productId}-${crypto.randomUUID()}.${extension}`;
@@ -222,7 +246,9 @@ export default function ProductManager({
 
     try {
       if (!name.trim()) {
-        throw new Error("Nama produk wajib diisi.");
+        throw new Error(
+          "Nama produk wajib diisi."
+        );
       }
 
       const numericPrice = Number(price);
@@ -247,7 +273,8 @@ export default function ProductManager({
       }
 
       const productId =
-        editingProduct?.id ?? crypto.randomUUID();
+        editingProduct?.id ??
+        crypto.randomUUID();
 
       let imageUrl =
         editingProduct?.image_url ?? null;
@@ -397,7 +424,9 @@ export default function ProductManager({
     }
   }
 
-  async function handleDelete(product: Product) {
+  async function handleDelete(
+    product: Product
+  ) {
     const confirmed = window.confirm(
       `Hapus produk "${product.name}"?`
     );
@@ -455,75 +484,114 @@ export default function ProductManager({
 
   return (
     <div>
-      {/* Top Actions */}
-      <div className="mb-6 flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm text-gray-500">
-            Total produk
-          </p>
+      {/* Toolbar */}
+      <section className="rounded-[28px] border border-[#e8e2d9] bg-white p-5 sm:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#a95d2c]" />
 
-          <p className="mt-1 text-2xl font-bold">
-            {products.length}
-          </p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#8b8175]">
+                Katalog Produk
+              </p>
+            </div>
+
+            <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em]">
+              Daftar Produk
+            </h2>
+
+            <p className="mt-1 text-sm text-[#81786d]">
+              {products.length} produk tersimpan di
+              katalog NusaRasa.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={openCreateForm}
+            className="inline-flex items-center justify-center rounded-xl bg-[#171512] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2b2823]"
+          >
+            <span className="mr-2 text-lg leading-none">
+              +
+            </span>
+            Tambah Produk
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={openCreateForm}
-          className="rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
-        >
-          + Tambah Produk
-        </button>
-      </div>
+      </section>
 
       {/* Messages */}
       {message && (
-        <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-          {message}
+        <div className="mt-4 rounded-2xl border border-[#cfe4d4] bg-[#eef8f0] px-5 py-4 text-sm text-[#39734a]">
+          <div className="flex items-center gap-3">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#d9efdd] text-xs font-bold">
+              ✓
+            </span>
+
+            <span>{message}</span>
+          </div>
         </div>
       )}
 
       {error && (
-        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
+        <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+          <div className="flex items-start gap-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-100 text-xs font-bold">
+              !
+            </span>
+
+            <span>{error}</span>
+          </div>
         </div>
       )}
 
       {/* Form */}
       {isFormOpen && (
-        <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold">
-                {editingProduct
-                  ? "Edit Produk"
-                  : "Tambah Produk"}
-              </h2>
+        <section className="mt-6 overflow-hidden rounded-[28px] border border-[#e8e2d9] bg-white">
+          <div className="border-b border-[#eee9e1] bg-[#faf8f4] px-5 py-5 sm:px-7">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#a95d2c]" />
 
-              <p className="mt-1 text-sm text-gray-500">
-                Isi informasi produk NusaRasa.
-              </p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#9b5425]">
+                    {editingProduct
+                      ? "Product Editor"
+                      : "New Product"}
+                  </p>
+                </div>
+
+                <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em]">
+                  {editingProduct
+                    ? "Edit Produk"
+                    : "Tambah Produk"}
+                </h2>
+
+                <p className="mt-1 text-sm text-[#81786d]">
+                  Isi informasi produk dengan lengkap.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={resetForm}
+                disabled={loading}
+                aria-label="Tutup form"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#ddd6cc] text-[#81786d] transition hover:bg-white hover:text-[#171512] disabled:opacity-50"
+              >
+                ×
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={resetForm}
-              className="text-sm text-gray-500 hover:text-black"
-            >
-              Tutup
-            </button>
           </div>
 
           <form
             onSubmit={handleSubmit}
-            className="grid gap-6 md:grid-cols-2"
+            className="grid gap-6 p-5 sm:p-7 md:grid-cols-2"
           >
             {/* Name */}
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Nama Produk
-              </label>
-
+            <FormField
+              label="Nama Produk"
+              required
+            >
               <input
                 type="text"
                 value={name}
@@ -531,23 +599,19 @@ export default function ProductManager({
                   setName(event.target.value)
                 }
                 placeholder="Contoh: Nasi Ayam Nusantara"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-black"
+                className="admin-input"
                 required
               />
-            </div>
+            </FormField>
 
             {/* Category */}
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Kategori
-              </label>
-
+            <FormField label="Kategori">
               <select
                 value={categoryId}
                 onChange={(event) =>
                   setCategoryId(event.target.value)
                 }
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-black"
+                className="admin-input bg-white"
               >
                 <option value="">
                   Tanpa kategori
@@ -562,33 +626,37 @@ export default function ProductManager({
                   </option>
                 ))}
               </select>
-            </div>
+            </FormField>
 
             {/* Price */}
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Harga
-              </label>
+            <FormField
+              label="Harga"
+              required
+            >
+              <div className="relative">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-[#9a9186]">
+                  Rp
+                </span>
 
-              <input
-                type="number"
-                min="0"
-                value={price}
-                onChange={(event) =>
-                  setPrice(event.target.value)
-                }
-                placeholder="18000"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-black"
-                required
-              />
-            </div>
+                <input
+                  type="number"
+                  min="0"
+                  value={price}
+                  onChange={(event) =>
+                    setPrice(event.target.value)
+                  }
+                  placeholder="18000"
+                  className="admin-input pl-11"
+                  required
+                />
+              </div>
+            </FormField>
 
             {/* Stock */}
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Stok
-              </label>
-
+            <FormField
+              label="Stok"
+              required
+            >
               <input
                 type="number"
                 min="0"
@@ -598,97 +666,131 @@ export default function ProductManager({
                   setStock(event.target.value)
                 }
                 placeholder="25"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-black"
+                className="admin-input"
                 required
               />
-            </div>
+            </FormField>
 
             {/* Description */}
             <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-medium">
-                Deskripsi
-              </label>
-
-              <textarea
-                value={description}
-                onChange={(event) =>
-                  setDescription(
-                    event.target.value
-                  )
-                }
-                placeholder="Deskripsi singkat produk..."
-                rows={4}
-                className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-black"
-              />
+              <FormField label="Deskripsi">
+                <textarea
+                  value={description}
+                  onChange={(event) =>
+                    setDescription(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Deskripsi singkat produk..."
+                  rows={4}
+                  className="admin-input resize-none"
+                />
+              </FormField>
             </div>
 
-            {/* Image */}
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Foto Produk
+            {/* Image Upload */}
+            <FormField label="Foto Produk">
+              <label className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[#d9d1c6] bg-[#faf8f4] px-5 py-6 text-center transition hover:border-[#b98967] hover:bg-[#f7f1eb]">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#9b5425] shadow-sm">
+                  ↑
+                </span>
+
+                <span className="mt-3 text-sm font-semibold text-[#3b3732]">
+                  Pilih foto produk
+                </span>
+
+                <span className="mt-1 text-xs text-[#958c81]">
+                  JPG, PNG, WebP · Maksimal 5 MB
+                </span>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="sr-only"
+                />
               </label>
 
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="block w-full text-sm"
-              />
-
-              <p className="mt-2 text-xs text-gray-500">
-                JPG, PNG, WebP. Maksimal 5 MB.
-              </p>
-            </div>
+              {selectedFile && (
+                <p className="mt-2 truncate text-xs text-[#71695f]">
+                  File: {selectedFile.name}
+                </p>
+              )}
+            </FormField>
 
             {/* Preview */}
-            <div>
-              <p className="mb-2 text-sm font-medium">
-                Preview
-              </p>
-
-              <div className="relative aspect-video items-center justify-center overflow-hidden rounded-xl bg-gray-100">
+            <FormField label="Preview">
+              <div className="relative aspect-video overflow-hidden rounded-2xl bg-[#f1eee8]">
                 {previewUrl ? (
                   <Image
                     src={previewUrl}
                     alt="Preview produk"
                     fill
-                    sizes="160px"
+                    sizes="(max-width: 768px) 100vw, 400px"
                     className="object-cover"
                   />
                 ) : (
-                  <span className="text-sm text-gray-400">
-                    Belum ada foto
-                  </span>
+                  <div className="flex h-full flex-col items-center justify-center text-center">
+                    <span className="text-2xl text-[#b1a89d]">
+                      □
+                    </span>
+
+                    <span className="mt-2 text-sm text-[#958c81]">
+                      Belum ada foto
+                    </span>
+                  </div>
                 )}
               </div>
-            </div>
+            </FormField>
 
             {/* Availability */}
             <div className="md:col-span-2">
-              <label className="flex cursor-pointer items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={isAvailable}
-                  onChange={(event) =>
-                    setIsAvailable(
-                      event.target.checked
-                    )
-                  }
-                  className="h-4 w-4"
-                />
+              <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-[#e8e2d9] bg-[#faf8f4] p-4">
+                <div>
+                  <p className="text-sm font-semibold">
+                    Produk tersedia
+                  </p>
 
-                <span className="text-sm font-medium">
-                  Produk tersedia untuk pelanggan
+                  <p className="mt-1 text-xs leading-5 text-[#8d8479]">
+                    Produk dapat ditampilkan dan dibeli
+                    oleh pelanggan.
+                  </p>
+                </div>
+
+                <span className="relative inline-flex shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={isAvailable}
+                    onChange={(event) =>
+                      setIsAvailable(
+                        event.target.checked
+                      )
+                    }
+                    className="peer sr-only"
+                  />
+
+                  <span className="h-6 w-11 rounded-full bg-[#d7d0c7] transition peer-checked:bg-[#9b5425]" />
+
+                  <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition peer-checked:translate-x-5" />
                 </span>
               </label>
             </div>
 
             {/* Buttons */}
-            <div className="flex gap-3 md:col-span-2">
+            <div className="flex flex-col-reverse gap-3 border-t border-[#eee9e1] pt-6 sm:flex-row md:col-span-2">
+              <button
+                type="button"
+                onClick={resetForm}
+                disabled={loading}
+                className="rounded-xl border border-[#ddd6cc] px-5 py-3 text-sm font-semibold text-[#5f584f] transition hover:bg-[#faf8f4] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Batal
+              </button>
+
               <button
                 type="submit"
                 disabled={loading}
-                className="rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl bg-[#171512] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2b2823] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading
                   ? "Menyimpan..."
@@ -696,128 +798,265 @@ export default function ProductManager({
                     ? "Simpan Perubahan"
                     : "Tambah Produk"}
               </button>
-
-              <button
-                type="button"
-                onClick={resetForm}
-                disabled={loading}
-                className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-              >
-                Batal
-              </button>
             </div>
           </form>
-        </div>
+        </section>
       )}
 
       {/* Product List */}
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
-        <div className="border-b border-gray-100 px-6 py-5">
-          <h2 className="font-semibold">
-            Daftar Produk
-          </h2>
+      <section className="mt-6 overflow-hidden rounded-[28px] border border-[#e8e2d9] bg-white">
+        <div className="border-b border-[#eee9e1] px-5 py-5 sm:px-7">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#8b8175]">
+                Inventory
+              </p>
+
+              <h2 className="mt-1 text-lg font-semibold tracking-[-0.02em]">
+                Semua Produk
+              </h2>
+            </div>
+
+            <p className="text-xs text-[#958c81]">
+              {products.length} item
+            </p>
+          </div>
         </div>
 
         {products.length === 0 ? (
-          <div className="p-12 text-center">
-            <p className="text-gray-500">
-              Belum ada produk.
+          <div className="px-6 py-16 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f3efe8] text-xl text-[#9a9186]">
+              +
+            </div>
+
+            <h3 className="mt-5 font-semibold">
+              Belum ada produk
+            </h3>
+
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#81786d]">
+              Mulai isi katalog NusaRasa dengan
+              menambahkan produk pertama.
             </p>
 
             <button
               type="button"
               onClick={openCreateForm}
-              className="mt-4 rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white"
+              className="mt-5 rounded-xl bg-[#171512] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2b2823]"
             >
               Tambah Produk
             </button>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="flex flex-col gap-5 p-6 lg:flex-row lg:items-center lg:justify-between"
-              >
-                <div className="flex min-w-0 gap-4">
-                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100">
-                    {product.image_url ? (
-                      <Image
-                        src={product.image_url}
-                        alt={product.name}
-                        fill
-                        sizes="64px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-xs text-gray-400">
-                        No Image
+          <div className="divide-y divide-[#eee9e1]">
+            {products.map((product, index) => {
+              const categoryName =
+                getCategoryName(product.categories);
+
+              const stockState =
+                product.stock === 0
+                  ? "habis"
+                  : product.stock <= 5
+                    ? "rendah"
+                    : "aman";
+
+              return (
+                <div
+                  key={product.id}
+                  className="group p-5 transition hover:bg-[#fcfaf7] sm:p-7"
+                >
+                  <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+                    <div className="flex min-w-0 gap-4 sm:gap-5">
+                      {/* Number */}
+                      <div className="hidden shrink-0 pt-2 text-[10px] font-bold tracking-[0.12em] text-[#b0a79c] sm:block">
+                        {String(index + 1).padStart(
+                          2,
+                          "0"
+                        )}
                       </div>
-                    )}
-                  </div>
 
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                      {product.categories?.[0]?.name ??
-                        "Tanpa kategori"}
-                    </p>
+                      {/* Image */}
+                      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-[#f1eee8] sm:h-28 sm:w-28">
+                        {product.image_url ? (
+                          <Image
+                            src={product.image_url}
+                            alt={product.name}
+                            fill
+                            sizes="112px"
+                            className="object-cover transition duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-xs text-[#958c81]">
+                            No Image
+                          </div>
+                        )}
+                      </div>
 
-                    <h3 className="mt-1 truncate text-lg font-semibold">
-                      {product.name}
-                    </h3>
+                      {/* Information */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-[#f4ede6] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#9b5425]">
+                            {categoryName}
+                          </span>
 
-                    <p className="mt-1 text-sm text-gray-500">
-                      {formatRupiah(
-                        Number(product.price)
-                      )}{" "}
-                      · Stok {product.stock}
-                    </p>
+                          {product.is_available ? (
+                            <span className="rounded-full bg-[#edf7ef] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#39734a]">
+                              Aktif
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-[#f1efeb] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#766e64]">
+                              Nonaktif
+                            </span>
+                          )}
+                        </div>
 
-                    <span
-                      className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-medium ${
-                        product.is_available
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {product.is_available
-                        ? "Tersedia"
-                        : "Tidak tersedia"}
-                    </span>
+                        <h3 className="mt-2 truncate text-lg font-semibold tracking-[-0.02em] text-[#171512] sm:text-xl">
+                          {product.name}
+                        </h3>
+
+                        <p className="mt-1 text-sm text-[#71695f]">
+                          {formatRupiah(
+                            Number(product.price)
+                          )}
+                        </p>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <StockBadge
+                            stock={product.stock}
+                            state={stockState}
+                          />
+
+                          <span className="text-xs text-[#a1988d]">
+                            Stok produk
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex shrink-0 gap-2 border-t border-[#eee9e1] pt-4 xl:border-0 xl:pt-0">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openEditForm(product)
+                        }
+                        className="flex-1 rounded-xl border border-[#ddd6cc] px-4 py-2.5 text-sm font-semibold text-[#4d4740] transition hover:bg-[#faf8f4] sm:flex-none"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleDelete(product)
+                        }
+                        disabled={
+                          deletingId ===
+                          product.id
+                        }
+                        className="flex-1 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                      >
+                        {deletingId ===
+                        product.id
+                          ? "Menghapus..."
+                          : "Hapus"}
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      openEditForm(product)
-                    }
-                    className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium hover:bg-gray-50"
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleDelete(product)
-                    }
-                    disabled={
-                      deletingId === product.id
-                    }
-                    className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-                  >
-                    {deletingId === product.id
-                      ? "Menghapus..."
-                      : "Hapus"}
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
-      </div>
+      </section>
+
+      {/* Local component styling */}
+      <style jsx>{`
+        .admin-input {
+          width: 100%;
+          border-radius: 0.875rem;
+          border: 1px solid #ddd6cc;
+          background: #ffffff;
+          padding: 0.75rem 1rem;
+          font-size: 0.875rem;
+          color: #171512;
+          outline: none;
+          transition:
+            border-color 150ms ease,
+            box-shadow 150ms ease,
+            background-color 150ms ease;
+        }
+
+        .admin-input::placeholder {
+          color: #aaa196;
+        }
+
+        .admin-input:focus {
+          border-color: #b98967;
+          box-shadow: 0 0 0 3px rgba(169, 93, 44, 0.08);
+        }
+
+        .admin-input:disabled {
+          cursor: not-allowed;
+          background: #f5f2ed;
+          opacity: 0.7;
+        }
+      `}</style>
     </div>
+  );
+}
+
+function FormField({
+  label,
+  required = false,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-semibold text-[#3f3a34]">
+        {label}
+        {required && (
+          <span className="ml-1 text-[#a95d2c]">
+            *
+          </span>
+        )}
+      </label>
+
+      {children}
+    </div>
+  );
+}
+
+function StockBadge({
+  stock,
+  state,
+}: {
+  stock: number;
+  state: "habis" | "rendah" | "aman";
+}) {
+  const styles = {
+    habis:
+      "bg-[#fff0ef] text-[#a34c47]",
+    rendah:
+      "bg-[#fff4df] text-[#9a651d]",
+    aman:
+      "bg-[#edf7ef] text-[#39734a]",
+  };
+
+  const labels = {
+    habis: "Habis",
+    rendah: "Stok Rendah",
+    aman: "Stok Aman",
+  };
+
+  return (
+    <span
+      className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ${styles[state]}`}
+    >
+      {labels[state]} · {stock}
+    </span>
   );
 }
