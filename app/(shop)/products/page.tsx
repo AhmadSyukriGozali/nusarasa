@@ -3,6 +3,29 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/utils";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Produk",
+  description:
+    "Jelajahi berbagai makanan lokal pilihan dari UMKM di NusaRasa. Temukan menu favoritmu dan pesan dengan mudah.",
+
+  openGraph: {
+    title: "Produk - NusaRasa",
+    description:
+      "Temukan makanan lokal pilihan dari berbagai UMKM di NusaRasa.",
+    url: "/products",
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Produk - NusaRasa",
+    description:
+      "Temukan makanan lokal pilihan dari berbagai UMKM di NusaRasa.",
+  },
+};
+
 type ProductsPageProps = {
   searchParams: Promise<{
     category?: string;

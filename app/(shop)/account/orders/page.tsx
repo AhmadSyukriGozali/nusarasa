@@ -4,6 +4,29 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/utils";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Riwayat Pesanan",
+  description:
+    "Lihat riwayat transaksi, status pesanan, dan total belanja kamu di NusaRasa.",
+
+  openGraph: {
+    title: "Riwayat Pesanan - NusaRasa",
+    description:
+      "Pantau status pesanan dan lihat riwayat belanja melalui akun NusaRasa.",
+    url: "/account/orders",
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Riwayat Pesanan - NusaRasa",
+    description:
+      "Pantau status pesanan dan lihat riwayat belanja melalui akun NusaRasa.",
+  },
+};
+
 type Order = {
   id: string;
   order_number: string;

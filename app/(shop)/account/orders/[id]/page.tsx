@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/utils";
 
+import type { Metadata } from "next";
+
 type OrderDetailPageProps = {
   params: Promise<{
     id: string;
@@ -34,6 +36,39 @@ type OrderItem = {
   price: number;
   quantity: number;
   subtotal: number;
+};
+
+export async function generateMetadata({
+  params,
+}: OrderDetailPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select("order_number")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) {
+    return {
+      title: "Detail Pesanan",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  return {
+    title: `Detail Pesanan ${data.order_number}`,
+    description:
+      "Lihat detail dan status pesananmu melalui akun NusaRasa.",
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
 };
 
 export default async function OrderDetailPage({

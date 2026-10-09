@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/utils";
 import AddToCart from "@/components/products/add-to-cart";
 
+import type { Metadata } from "next";
+
 type ProductDetailPageProps = {
   params: Promise<{
     slug: string;
@@ -31,6 +33,71 @@ type Product = {
       }[]
     | null;
 };
+
+export async function generateMetadata({
+  params,
+}: ProductDetailPageProps): Promise<Metadata> {
+  const { slug } = await params;
+
+  const supabase = await createClient();
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("name, slug, description, image_url, is_available, stock")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (
+    !product ||
+    !product.is_available ||
+    product.stock <= 0
+  ) {
+    return {
+      title: "Produk tidak ditemukan",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const description =
+    product.description?.trim() ||
+    `Temukan ${product.name} di NusaRasa. Jelajahi produk lokal pilihan dan pesan dengan mudah.`;
+
+  const pageTitle = `${product.name} - NusaRasa`;
+
+  const images = product.image_url
+    ? [
+        {
+          url: product.image_url,
+          alt: product.name,
+        },
+      ]
+    : undefined;
+
+  return {
+    title: product.name,
+    description,
+
+    openGraph: {
+      title: pageTitle,
+      description,
+      url: `/products/${product.slug}`,
+      siteName: "NusaRasa",
+      type: "website",
+      locale: "id_ID",
+      images,
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title: pageTitle,
+      description,
+      images,
+    },
+  };
+}
 
 export default async function ProductDetailPage({
   params,

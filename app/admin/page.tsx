@@ -1,8 +1,18 @@
 import Link from "next/link";
-
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/utils";
 import LogoutButton from "@/components/auth/logout-button";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description:
+    "Pantau statistik produk, kategori, pendapatan, dan pesanan terbaru melalui dashboard admin NusaRasa.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function AdminPage() {
   const supabase = await createClient();

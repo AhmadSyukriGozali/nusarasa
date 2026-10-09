@@ -1,7 +1,31 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import AdminSidebar from "@/components/admin/admin-sidebar";
+
+export const metadata: Metadata = {
+  title: "Admin Dashboard",
+  description:
+    "Kelola produk, pesanan, kategori, dan operasional UMKM melalui dashboard admin NusaRasa.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+  openGraph: {
+    title: "Admin Dashboard - NusaRasa",
+    description:
+      "Dashboard untuk mengelola produk, pesanan, dan operasional NusaRasa.",
+    url: "/admin",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Admin Dashboard - NusaRasa",
+    description:
+      "Dashboard untuk mengelola produk, pesanan, dan operasional NusaRasa.",
+  },
+};
 
 export default async function AdminLayout({
   children,
