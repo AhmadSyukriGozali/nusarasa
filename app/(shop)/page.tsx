@@ -17,11 +17,11 @@ type Product = {
   price: number;
   stock: number;
   image_url: string | null;
+  // Relasi many-to-one: Supabase mengembalikan objek tunggal.
+  // Tipe array tetap diterima agar aman jika bentuk relasi berubah.
   categories:
-    | {
-        name: string;
-        slug: string;
-      }[]
+    | { name: string; slug: string }
+    | { name: string; slug: string }[]
     | null;
 };
 
@@ -300,9 +300,12 @@ export default async function HomePage() {
           {products.length > 0 ? (
             <div className="mt-9 grid gap-x-5 gap-y-9 sm:grid-cols-2 lg:grid-cols-4">
               {products.map((product) => {
+                const category = Array.isArray(product.categories)
+                  ? product.categories[0]
+                  : product.categories;
+
                 const categoryName =
-                  product.categories?.[0]?.name ??
-                  "Tanpa kategori";
+                  category?.name ?? "Tanpa kategori";
 
                 return (
                   <Link
@@ -325,7 +328,7 @@ export default async function HomePage() {
                         </div>
                       )}
 
-                      <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-black/60 shadow-sm backdrop-blur">
+                      <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#171512]/80 shadow-sm backdrop-blur">
                         {categoryName}
                       </div>
 
