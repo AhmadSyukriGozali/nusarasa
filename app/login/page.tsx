@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,16 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const verified = useSyncExternalStore(
+    () => () => {},
+    () =>
+      new URLSearchParams(window.location.search).get("verified") === "1",
+    () => false
+  );
+
+  const infoMessage = verified
+    ? "Email kamu sudah terverifikasi. Silakan masuk dengan email dan password."
+    : "";
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -198,6 +208,15 @@ export default function LoginPage() {
                     className="w-full rounded-2xl border border-[#dcd5ca] bg-white px-4 py-3.5 text-sm text-[#171512] outline-none transition placeholder:text-[#aaa298] focus:border-[#9b5425] focus:ring-4 focus:ring-[#9b5425]/10 disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
+
+                {infoMessage && !errorMessage && (
+                  <div
+                    role="status"
+                    className="flex gap-3 rounded-2xl border border-[#c9dfc9] bg-[#f4faf4] p-4 text-sm text-[#2f6b3a]"
+                  >
+                    <p className="leading-6">{infoMessage}</p>
+                  </div>
+                )}
 
                 {errorMessage && (
                   <div

@@ -7,8 +7,9 @@ export default function AuthErrorPage() {
         </h1>
 
         <p className="mt-3 text-sm text-gray-600">
-          Terjadi masalah saat memproses authentication.
-          Silakan coba login kembali.
+          Link verifikasi tidak valid, sudah dipakai, atau sudah kedaluwarsa.
+          Jika kamu sudah pernah mengklik link tersebut, akunmu kemungkinan
+          sudah terverifikasi. Silakan coba login.
         </p>
 
         <a
